@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS users(
+    id BIGINT AUTO_INCREMENT,
+    username varchar(225) NOT NULL,
+    email varchar(225) NOT NULL,
+    password varchar(225) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at BIGINT NULL DEFAULT 0,
+    CONSTRAINT kbr_users_pk PRIMARY KEY(id)
+);

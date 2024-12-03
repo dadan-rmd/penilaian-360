@@ -1,0 +1,7 @@
+# Do not commit build result
+builds/
+central-auth-sercive*
+# Do not commit env file
+.env
+# Do not commit log file
+*.log
