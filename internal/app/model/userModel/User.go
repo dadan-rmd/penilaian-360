@@ -30,8 +30,9 @@ type CreateUserReq struct {
 }
 
 type ResLogin struct {
-	User  User
-	Token string `json:"token"`
+	User     User
+	Platform []string `json:"platform"`
+	Token    string   `json:"token"`
 }
 
 const (

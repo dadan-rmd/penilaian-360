@@ -8,4 +8,5 @@ import (
 
 type IPlatformRepository interface {
 	BulkInsert(tx *gorm.DB, data []platformModel.Platform) error
+	FindNameByID(id int64) (name []string, err error)
 }

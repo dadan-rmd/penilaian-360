@@ -6,6 +6,7 @@ import (
 	"central-auth/internal/app/commons/symmetricHash"
 	"central-auth/internal/app/model/authModel"
 	"central-auth/internal/app/model/userModel"
+	"central-auth/internal/app/repository/platformRepository"
 	"central-auth/internal/app/repository/userRepository"
 	"errors"
 	"os"
@@ -19,6 +20,7 @@ import (
 var (
 	ErrInvalidCredential = errors.New("invalid credential")
 	ErrUserNotFound      = errors.New("user not found")
+	ErrPlatformNotFound  = errors.New("platform not found")
 )
 
 const (
@@ -27,13 +29,15 @@ const (
 )
 
 type authUseCase struct {
-	userRepo userRepository.IUserRepository
+	userRepo     userRepository.IUserRepository
+	platformRepo platformRepository.IPlatformRepository
 }
 
 func NewAuthService(
 	userRepo userRepository.IUserRepository,
+	platformRepo platformRepository.IPlatformRepository,
 ) IAuthService {
-	return &authUseCase{userRepo}
+	return &authUseCase{userRepo, platformRepo}
 }
 
 func (a authUseCase) Login(record *loggers.Data, loginReq authModel.LoginReq) (loginRes userModel.ResLogin, err error) {
@@ -45,8 +49,13 @@ func (a authUseCase) Login(record *loggers.Data, loginReq authModel.LoginReq) (l
 	if !symmetricHash.CompareBcrypt(userData.Password, loginReq.Password) {
 		return loginRes, ErrInvalidCredential
 	}
+	platformName, err := a.platformRepo.FindNameByID(userData.Id)
+	if err != nil {
+		return loginRes, ErrPlatformNotFound
+	}
 
 	loginRes.User = *userData
+	loginRes.Platform = platformName
 
 	jwtExpirationDurationDayString := os.Getenv("JWT_EXPIRATION_DURATION_DAY")
 	var jwtExpirationDurationDay int

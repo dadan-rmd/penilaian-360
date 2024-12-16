@@ -21,3 +21,12 @@ func (d platformRepository) BulkInsert(tx *gorm.DB, data []platformModel.Platfor
 		return d.db.Create(&data).Error
 	}
 }
+
+func (d platformRepository) FindNameByID(id int64) (name []string, err error) {
+	err = d.db.
+		Model(platformModel.Platform{}).
+		Where("id=?", id).
+		Pluck("name", &name).
+		Error
+	return
+}
