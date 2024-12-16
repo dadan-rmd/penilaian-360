@@ -12,4 +12,5 @@ FROM golang:1.18-alpine
 COPY --from=builder /app/central-auth /app/central-auth
 RUN apk add --no-cache tzdata ca-certificates libc6-compat
 
+WORKDIR /app
 ENTRYPOINT ["/app/central-auth"]
