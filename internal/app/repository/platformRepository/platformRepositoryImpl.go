@@ -30,3 +30,12 @@ func (d platformRepository) FindNameByID(id int64) (name []string, err error) {
 		Error
 	return
 }
+
+func (d platformRepository) FindNameByUserID(id int64) (name []string, err error) {
+	err = d.db.
+		Model(platformModel.Platform{}).
+		Where("user_id=?", id).
+		Pluck("name", &name).
+		Error
+	return
+}

@@ -33,17 +33,16 @@ func NewUserService(userRepo userRepository.IUserRepository, db *gorm.DB, platfo
 }
 
 func (u userService) CreateUser(record *loggers.Data, req userModel.CreateUserReq) (user *userModel.User, statusCode int, err error) {
-	_, err = u.userRepo.FindUserByEmail(req.Email)
+	var platform []platformModel.Platform
+	user, err = u.userRepo.FindUserByEmail(req.Email)
 	tx := u.db.Begin()
 	defer func() {
-		// if error, rollback all changes
 		if err != nil {
 			if errRollback := tx.Rollback(); errRollback != nil {
 				loggers.Logf(record, "[Error] Rollback: ", errRollback.Error)
 			}
 			return
 		}
-		// commit the db transaction
 		if err = tx.Commit().Error; err != nil {
 			loggers.Logf(record, "[Error] Commit : ", err)
 		}
@@ -61,7 +60,6 @@ func (u userService) CreateUser(record *loggers.Data, req userModel.CreateUserRe
 				statusCode = http.StatusInternalServerError
 				return
 			}
-			var platform []platformModel.Platform
 			for _, v := range req.Platform {
 				platform = append(platform, platformModel.Platform{
 					UserId: user.Id,
@@ -77,7 +75,32 @@ func (u userService) CreateUser(record *loggers.Data, req userModel.CreateUserRe
 			statusCode = http.StatusOK
 			return
 		}
+		return nil, http.StatusInternalServerError, ErrEmailAlreadyExist
 	}
-
-	return nil, http.StatusInternalServerError, ErrEmailAlreadyExist
+	namePlatform, err := u.platformRepo.FindNameByUserID(user.Id)
+	if err != nil {
+		loggers.Logf(record, "[Error] FindNameByUserID : ", err)
+		statusCode = http.StatusInternalServerError
+		return
+	}
+	platformMap := make(map[string]bool)
+	for _, data := range namePlatform {
+		platformMap[data] = true
+	}
+	for _, v := range req.Platform {
+		if !platformMap[v] {
+			platform = append(platform, platformModel.Platform{
+				UserId: user.Id,
+				Name:   strings.ToUpper(v),
+			})
+		}
+	}
+	err = u.platformRepo.BulkInsert(tx, platform)
+	if err != nil {
+		loggers.Logf(record, "[Error] BulkInsert Platform : ", err)
+		statusCode = http.StatusInternalServerError
+		return
+	}
+	statusCode = http.StatusOK
+	return
 }
