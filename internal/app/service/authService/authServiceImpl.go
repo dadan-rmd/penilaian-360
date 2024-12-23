@@ -15,6 +15,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cast"
+	"gorm.io/gorm"
 )
 
 var (
@@ -31,13 +32,15 @@ const (
 type authUseCase struct {
 	userRepo     userRepository.IUserRepository
 	platformRepo platformRepository.IPlatformRepository
+	db           *gorm.DB
 }
 
 func NewAuthService(
 	userRepo userRepository.IUserRepository,
 	platformRepo platformRepository.IPlatformRepository,
+	db *gorm.DB,
 ) IAuthService {
-	return &authUseCase{userRepo, platformRepo}
+	return &authUseCase{userRepo, platformRepo, db}
 }
 
 func (a authUseCase) Login(record *loggers.Data, loginReq authModel.LoginReq) (loginRes userModel.ResLogin, err error) {
@@ -74,4 +77,33 @@ func (a authUseCase) Login(record *loggers.Data, loginReq authModel.LoginReq) (l
 	}
 	loginRes.Token = jwtToken
 	return loginRes, nil
+}
+
+func (a authUseCase) ChangePasswordFromForgotPass(record *loggers.Data, request authModel.ChangePasswordFromForgotPassReq) (err error) {
+	loggers.Logf(record, "Info, VerifyForgotPassword")
+	userData, err := a.userRepo.FindUserByEmail(request.Email)
+	if err != nil {
+		loggers.Logf(record, "Error, FindUserByEmail")
+		return ErrUserNotFound
+	}
+	tx := a.db.Begin()
+	defer func() {
+		if err != nil {
+			if errRollback := tx.Rollback(); errRollback != nil {
+				loggers.Logf(record, "[Error] Rollback: ", errRollback.Error)
+			}
+			return
+		}
+		if err = tx.Commit().Error; err != nil {
+			loggers.Logf(record, "[Error] Commit : ", err)
+		}
+	}()
+	userData.Password = symmetricHash.ToBcrypt(request.NewPassword)
+	err = a.userRepo.Save(tx, userData)
+	if err != nil {
+		loggers.Logf(record, "Error, UpdateUser")
+		return err
+	}
+
+	return nil
 }

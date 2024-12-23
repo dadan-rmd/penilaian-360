@@ -8,4 +8,5 @@ import (
 
 type IAuthService interface {
 	Login(record *loggers.Data, loginReq authModel.LoginReq) (loginRes userModel.ResLogin, err error)
+	ChangePasswordFromForgotPass(record *loggers.Data, request authModel.ChangePasswordFromForgotPassReq) (err error)
 }

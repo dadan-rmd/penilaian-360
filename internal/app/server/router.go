@@ -63,6 +63,7 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 		authGroup := apiGroup.Group("/auth")
 		{
 			authGroup.POST("/login", authHandler.Login)
+			authGroup.POST("/forgot-password", authHandler.ForgotPass)
 			authGroup.POST("/register", opt.AuthMiddleware.BasicAuthenticate(), userHandler.AddUser)
 		}
 	}

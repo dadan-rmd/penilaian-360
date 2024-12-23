@@ -67,9 +67,6 @@ type ChangePasswordFromForgotPassReq struct {
 	NewPassword string `json:"new_password" binding:"required"`
 }
 
-type ChangePasswordFromForgotPassRes struct {
-}
-
 type TokenSession struct {
 	ID        int64  `json:"id"`
 	TokenUID  string `json:"token_uid"`

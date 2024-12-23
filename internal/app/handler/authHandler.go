@@ -42,3 +42,27 @@ func (authDelivery AuthHandler) Login(c *gin.Context) {
 	}
 	utils.BasicResponse(record, c.Writer, true, http.StatusOK, loginRes, "Success")
 }
+
+func (authDelivery AuthHandler) ForgotPass(c *gin.Context) {
+	record := loggers.StartRecord(c.Request)
+
+	var request authModel.ChangePasswordFromForgotPassReq
+	errBind := c.ShouldBind(&request)
+	if errBind != nil {
+		validations := requestvalidationerror.GetvalidationError(errBind)
+
+		if len(validations) > 0 {
+			jsonHttpResponse.NewFailedMissingRequiredFieldResponse(c, validations)
+			return
+		}
+		utils.BasicResponse(record, c.Writer, false, http.StatusBadRequest, errBind.Error(), "")
+		return
+	}
+
+	err := authDelivery.AuthService.ChangePasswordFromForgotPass(record, request)
+	if err != nil {
+		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
+		return
+	}
+	utils.BasicResponse(record, c.Writer, true, http.StatusOK, nil, "password changed successfully")
+}

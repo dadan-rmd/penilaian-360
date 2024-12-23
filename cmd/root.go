@@ -146,7 +146,7 @@ func wiringRepository(repoOption repository.Option) *repository.Repositories {
 func wiringService(serviceOption service.Option) *service.Services {
 	svc := service.Services{
 		HealtyService:  healtyService.NewHealtyService(serviceOption.HealtyRepository),
-		AuthService:    authService.NewAuthService(serviceOption.UserRepository, serviceOption.PlatformRepository),
+		AuthService:    authService.NewAuthService(serviceOption.UserRepository, serviceOption.PlatformRepository, serviceOption.Db),
 		AuthMiddleware: authMiddleware.NewAuthMiddleware(serviceOption.UserRepository),
 		UserService:    userService.NewUserService(serviceOption.UserRepository, serviceOption.Db, serviceOption.PlatformRepository),
 	}
