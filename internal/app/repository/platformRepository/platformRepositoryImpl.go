@@ -25,7 +25,7 @@ func (d platformRepository) BulkInsert(tx *gorm.DB, data []platformModel.Platfor
 func (d platformRepository) FindNameByID(id int64) (name []string, err error) {
 	err = d.db.
 		Model(platformModel.Platform{}).
-		Where("id=?", id).
+		Where("user_id=?", id).
 		Pluck("name", &name).
 		Error
 	return
