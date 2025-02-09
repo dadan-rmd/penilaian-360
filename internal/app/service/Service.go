@@ -1,12 +1,12 @@
 package service
 
 import (
-	"central-auth/internal/app/commons"
-	"central-auth/internal/app/middleware/authMiddleware"
-	"central-auth/internal/app/repository"
-	"central-auth/internal/app/service/authService"
-	"central-auth/internal/app/service/healtyService"
-	"central-auth/internal/app/service/userService"
+	"penilaian-360/internal/app/commons"
+	"penilaian-360/internal/app/middleware/authMiddleware"
+	"penilaian-360/internal/app/repository"
+	"penilaian-360/internal/app/service/authService"
+	"penilaian-360/internal/app/service/departmentService"
+	"penilaian-360/internal/app/service/employeeService"
 )
 
 // Option anything any service object needed
@@ -16,8 +16,8 @@ type Option struct {
 }
 
 type Services struct {
-	HealtyService  healtyService.IHealtyService
-	AuthService    authService.IAuthService
-	AuthMiddleware authMiddleware.IAuthMiddleware
-	UserService    userService.IUserService
+	AuthService       authService.IAuthService
+	AuthMiddleware    authMiddleware.IAuthMiddleware
+	DepartmentService departmentService.IDepartmentService
+	EmployeeService   employeeService.IEmployeeService
 }

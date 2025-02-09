@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"central-auth/internal/pkg/log"
+	"penilaian-360/internal/pkg/log"
 )
 
 type HandlerOption func(*HttpHandler)

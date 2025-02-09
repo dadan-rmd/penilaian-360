@@ -5,9 +5,9 @@ import (
 	"flag"
 	"os"
 
-	"central-auth/internal/app/commons"
-	"central-auth/internal/app/commons/applicationConstants"
-	"central-auth/internal/app/migration"
+	"penilaian-360/internal/app/commons"
+	"penilaian-360/internal/app/commons/applicationConstants"
+	"penilaian-360/internal/app/migration"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"

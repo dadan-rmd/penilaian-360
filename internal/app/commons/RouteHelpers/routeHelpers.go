@@ -1,9 +1,9 @@
 package RouteHelpers
 
 import (
-	"central-auth/internal/app/model/userModel"
 	"encoding/json"
 	"errors"
+	"penilaian-360/internal/app/model/userModel"
 
 	"github.com/gin-gonic/gin"
 )

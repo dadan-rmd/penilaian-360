@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"central-auth/internal/app/commons"
-	"central-auth/internal/app/service"
+	"penilaian-360/internal/app/commons"
+	"penilaian-360/internal/app/service"
 )
 
 // HandlerOption option for handler, including all service

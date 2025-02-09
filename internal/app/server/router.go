@@ -1,8 +1,8 @@
 package server
 
 import (
-	"central-auth/internal/app/handler"
 	"os"
+	"penilaian-360/internal/app/handler"
 	"strings"
 	"time"
 
@@ -13,15 +13,14 @@ import (
 )
 
 func Router(opt handler.HandlerOption) *gin.Engine {
-	healthyHandler := handler.HealthyCheckHandler{
-		HandlerOption: opt,
-	}
 
 	authHandler := handler.AuthHandler{
 		HandlerOption: opt,
 	}
-
-	userHandler := handler.UserHandler{
+	departmentHandler := handler.DepartmentHandler{
+		HandlerOption: opt,
+	}
+	employeeHandler := handler.EmployeeHandler{
 		HandlerOption: opt,
 	}
 
@@ -58,14 +57,14 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 
 	apiGroup := r.Group("/api/v1")
 	{
-		apiGroup.GET("/healthy-check", healthyHandler.HealthyCheck)
 
 		authGroup := apiGroup.Group("/auth")
 		{
 			authGroup.POST("/login", authHandler.Login)
-			authGroup.POST("/forgot-password", authHandler.ForgotPass)
-			authGroup.POST("/register", opt.AuthMiddleware.BasicAuthenticate(), userHandler.AddUser)
 		}
+
+		apiGroup.GET("/departement", departmentHandler.GetDepartment)
+		apiGroup.GET("/employee", employeeHandler.GetEmployee)
 	}
 
 	return r

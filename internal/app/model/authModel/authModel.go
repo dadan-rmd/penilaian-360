@@ -1,8 +1,8 @@
 package authModel
 
 import (
-	"central-auth/internal/app/model/helperModel"
-	"central-auth/internal/app/model/userModel"
+	"penilaian-360/internal/app/model/helperModel"
+	"penilaian-360/internal/app/model/userModel"
 )
 
 type LoginReq struct {

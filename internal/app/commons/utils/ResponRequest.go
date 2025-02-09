@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"central-auth/internal/app/commons/loggers"
+	"penilaian-360/internal/app/commons/loggers"
 
 	_ "github.com/joho/godotenv/autoload" //buat jaga2
 	"github.com/spf13/cast"

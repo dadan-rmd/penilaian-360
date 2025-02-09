@@ -1,6 +1,6 @@
 # Do not commit build result
 builds/
-central-auth-sercive*
+penilaian-360-sercive*
 # Do not commit env file
 .env
 # Do not commit log file

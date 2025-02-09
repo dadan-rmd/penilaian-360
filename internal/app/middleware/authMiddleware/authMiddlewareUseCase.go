@@ -1,9 +1,9 @@
 package authMiddleware
 
 import (
-	"central-auth/internal/app/commons/jsonHttpResponse"
-	"central-auth/internal/app/repository/userRepository"
 	"os"
+	"penilaian-360/internal/app/commons/jsonHttpResponse"
+	"penilaian-360/internal/app/repository/userRepository"
 
 	"github.com/gin-gonic/gin"
 )

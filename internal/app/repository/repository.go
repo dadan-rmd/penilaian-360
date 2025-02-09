@@ -1,10 +1,14 @@
 package repository
 
 import (
-	"central-auth/internal/app/commons"
-	"central-auth/internal/app/repository/healtyRepository"
-	"central-auth/internal/app/repository/platformRepository"
-	"central-auth/internal/app/repository/userRepository"
+	"penilaian-360/internal/app/commons"
+	"penilaian-360/internal/app/repository/departmentRepository"
+	"penilaian-360/internal/app/repository/employeeRepository"
+	"penilaian-360/internal/app/repository/evaluationAnswerRepository"
+	"penilaian-360/internal/app/repository/evaluationEmployeeRepository"
+	"penilaian-360/internal/app/repository/evaluationRepository"
+	"penilaian-360/internal/app/repository/questionRepository"
+	"penilaian-360/internal/app/repository/userRepository"
 )
 
 // Option anything any repo object needed
@@ -13,7 +17,11 @@ type Option struct {
 }
 
 type Repositories struct {
-	HealtyRepository   healtyRepository.IHealtyRepository
-	UserRepository     userRepository.IUserRepository
-	PlatformRepository platformRepository.IPlatformRepository
+	UserRepository               userRepository.IUserRepository
+	EvaluationRepository         evaluationRepository.IEvaluationRepository
+	QuestionRepository           questionRepository.IQuestionRepository
+	EvaluationAnswerRepository   evaluationAnswerRepository.IEvaluationAnswerRepository
+	EvaluationEmployeeRepository evaluationEmployeeRepository.IEvaluationEmployeeRepository
+	DepartmentRepository         departmentRepository.IDepartmentRepository
+	EmployeeRepository           employeeRepository.IEmployeeRepository
 }

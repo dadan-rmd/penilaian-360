@@ -1,4 +1,4 @@
-module central-auth
+module penilaian-360
 
 go 1.18
 

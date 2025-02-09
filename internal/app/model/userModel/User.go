@@ -1,8 +1,8 @@
 package userModel
 
 import (
-	"central-auth/internal/app/model/helperModel"
 	"fmt"
+	"penilaian-360/internal/app/model/helperModel"
 	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"

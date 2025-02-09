@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"central-auth/internal/app/commons/loggers"
-	"central-auth/internal/app/commons/utils"
+	"penilaian-360/internal/app/commons/loggers"
+	"penilaian-360/internal/app/commons/utils"
 )
 
 func Curl(record *loggers.Data, serviceName, method string, url string, body []byte, arrheader map[string]string) ([]byte, int, error) {

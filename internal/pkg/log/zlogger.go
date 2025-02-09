@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 
-	"central-auth/internal/pkg/ctxkeys"
+	"penilaian-360/internal/pkg/ctxkeys"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

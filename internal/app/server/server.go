@@ -6,9 +6,9 @@ import (
 	"os"
 	"strconv"
 
-	"central-auth/internal/app/commons"
-	"central-auth/internal/app/handler"
-	"central-auth/internal/app/service"
+	"penilaian-360/internal/app/commons"
+	"penilaian-360/internal/app/handler"
+	"penilaian-360/internal/app/service"
 
 	"github.com/rs/zerolog/log"
 )

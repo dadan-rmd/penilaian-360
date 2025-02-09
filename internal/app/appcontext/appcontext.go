@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"central-auth/config"
-	"central-auth/internal/app/driver"
+	"penilaian-360/config"
+	"penilaian-360/internal/app/driver"
 
 	"gorm.io/gorm"
 

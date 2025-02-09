@@ -10,7 +10,7 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"central-auth/internal/app/commons/loggers"
+	"penilaian-360/internal/app/commons/loggers"
 
 	"github.com/sony/gobreaker"
 	"github.com/spf13/cast"

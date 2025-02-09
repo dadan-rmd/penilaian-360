@@ -6,19 +6,23 @@ import (
 	"path"
 	"runtime"
 
-	"central-auth/config"
-	"central-auth/internal/app/appcontext"
-	"central-auth/internal/app/commons"
-	"central-auth/internal/app/middleware/authMiddleware"
-	"central-auth/internal/app/repository"
-	"central-auth/internal/app/repository/healtyRepository"
-	"central-auth/internal/app/repository/platformRepository"
-	"central-auth/internal/app/repository/userRepository"
-	"central-auth/internal/app/server"
-	"central-auth/internal/app/service"
-	"central-auth/internal/app/service/authService"
-	"central-auth/internal/app/service/healtyService"
-	"central-auth/internal/app/service/userService"
+	"penilaian-360/config"
+	"penilaian-360/internal/app/appcontext"
+	"penilaian-360/internal/app/commons"
+	"penilaian-360/internal/app/middleware/authMiddleware"
+	"penilaian-360/internal/app/repository"
+	"penilaian-360/internal/app/repository/departmentRepository"
+	"penilaian-360/internal/app/repository/employeeRepository"
+	"penilaian-360/internal/app/repository/evaluationAnswerRepository"
+	"penilaian-360/internal/app/repository/evaluationEmployeeRepository"
+	"penilaian-360/internal/app/repository/evaluationRepository"
+	"penilaian-360/internal/app/repository/questionRepository"
+	"penilaian-360/internal/app/repository/userRepository"
+	"penilaian-360/internal/app/server"
+	"penilaian-360/internal/app/service"
+	"penilaian-360/internal/app/service/authService"
+	"penilaian-360/internal/app/service/departmentService"
+	"penilaian-360/internal/app/service/employeeService"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -135,20 +139,25 @@ func start() {
 }
 func wiringRepository(repoOption repository.Option) *repository.Repositories {
 	repo := repository.Repositories{
-		HealtyRepository:   healtyRepository.NewHealtyRepository(repoOption.Db),
-		UserRepository:     userRepository.NewUserRepository(repoOption.Db),
-		PlatformRepository: platformRepository.NewPlatformRepository(repoOption.Db),
+		UserRepository:               userRepository.NewUserRepository(repoOption.Db),
+		EvaluationRepository:         evaluationRepository.NewEvaluationRepository(repoOption.Db),
+		QuestionRepository:           questionRepository.NewQuestionRepository(repoOption.Db),
+		EvaluationAnswerRepository:   evaluationAnswerRepository.NewEvaluationAnswerRepository(repoOption.Db),
+		EvaluationEmployeeRepository: evaluationEmployeeRepository.NewEvaluationEmployeeRepository(repoOption.Db),
+		DepartmentRepository:         departmentRepository.NewDepartmentRepository(repoOption.Db),
+		EmployeeRepository:           employeeRepository.NewEmployeeRepository(repoOption.Db),
 	}
 
 	return &repo
 }
 
 func wiringService(serviceOption service.Option) *service.Services {
+	// trx := transaction.NewTransaction(serviceOption.Db)
 	svc := service.Services{
-		HealtyService:  healtyService.NewHealtyService(serviceOption.HealtyRepository),
-		AuthService:    authService.NewAuthService(serviceOption.UserRepository, serviceOption.PlatformRepository, serviceOption.Db),
-		AuthMiddleware: authMiddleware.NewAuthMiddleware(serviceOption.UserRepository),
-		UserService:    userService.NewUserService(serviceOption.UserRepository, serviceOption.Db, serviceOption.PlatformRepository),
+		AuthService:       authService.NewAuthService(serviceOption.Db),
+		AuthMiddleware:    authMiddleware.NewAuthMiddleware(serviceOption.UserRepository),
+		DepartmentService: departmentService.NewDepartmentService(serviceOption.DepartmentRepository),
+		EmployeeService:   employeeService.NewEmployeeService(serviceOption.EmployeeRepository, serviceOption.EvaluationEmployeeRepository),
 	}
 	return &svc
 }

@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"time"
 
-	"central-auth/cmd"
-	"central-auth/internal/app/commons/logHelper"
+	"penilaian-360/cmd"
+	"penilaian-360/internal/app/commons/logHelper"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cast"

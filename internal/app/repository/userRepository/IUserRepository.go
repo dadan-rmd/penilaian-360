@@ -1,7 +1,7 @@
 package userRepository
 
 import (
-	"central-auth/internal/app/model/userModel"
+	"penilaian-360/internal/app/model/userModel"
 
 	"gorm.io/gorm"
 )

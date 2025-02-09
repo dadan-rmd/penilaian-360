@@ -1,7 +1,7 @@
 package commons
 
 import (
-	"central-auth/internal/app/appcontext"
+	"penilaian-360/internal/app/appcontext"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/go-playground/validator/v10"
