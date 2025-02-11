@@ -1,6 +1,7 @@
 package evaluationRepository
 
 import (
+	datapaging "penilaian-360/internal/app/commons/dataPagingHelper"
 	"penilaian-360/internal/app/model/evaluationModel"
 
 	"gorm.io/gorm"
@@ -13,6 +14,23 @@ type evaluationRepository struct {
 
 func NewEvaluationRepository(db *gorm.DB) IEvaluationRepository {
 	return &evaluationRepository{db}
+}
+
+func (d evaluationRepository) GetWithPaging(paging datapaging.Datapaging) (data []evaluationModel.EvaluationList, count int64, err error) {
+	db := d.db.Model(&evaluationModel.Evaluation{}).
+		Select("evaluations.*, master_department.DepartmentName").
+		Joins("JOIN master_department on master_department.id = evaluations.departement_id").
+		Order("evaluations.created_at desc")
+
+	db.Count(&count)
+
+	if paging.Page != 0 {
+		pg := datapaging.New(paging.Limit, paging.Page, []string{})
+		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
+	}
+
+	err = db.Scan(&data).Error
+	return
 }
 
 func (d evaluationRepository) FindByID(id int64) (entity *evaluationModel.Evaluation, err error) {
@@ -29,7 +47,10 @@ func (d evaluationRepository) Save(tx *gorm.DB, data *evaluationModel.Evaluation
 	}
 }
 
-func (d evaluationRepository) Delete(evaluationData evaluationModel.Evaluation) error {
-	db := d.db.Delete(&evaluationData)
-	return db.Error
+func (d evaluationRepository) Delete(tx *gorm.DB, id int64) error {
+	if tx != nil {
+		return tx.Delete(&evaluationModel.Evaluation{}, id).Error
+	} else {
+		return d.db.Delete(&evaluationModel.Evaluation{}, id).Error
+	}
 }

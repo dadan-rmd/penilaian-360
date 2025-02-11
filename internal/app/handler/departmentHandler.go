@@ -12,9 +12,9 @@ type DepartmentHandler struct {
 	HandlerOption
 }
 
-func (departmentDelivery DepartmentHandler) GetDepartment(c *gin.Context) {
+func (department DepartmentHandler) GetDepartment(c *gin.Context) {
 	record := loggers.StartRecord(c.Request)
-	res, err := departmentDelivery.DepartmentService.GetDepartmentAll(record)
+	res, err := department.DepartmentService.GetDepartmentAll(record)
 	if err != nil {
 		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
 		return

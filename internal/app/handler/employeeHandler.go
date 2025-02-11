@@ -13,7 +13,7 @@ type EmployeeHandler struct {
 	HandlerOption
 }
 
-func (employeeDelivery EmployeeHandler) GetEmployee(c *gin.Context) {
+func (employee EmployeeHandler) GetEmployee(c *gin.Context) {
 	var (
 		record = loggers.StartRecord(c.Request)
 		params = employeeModel.EmployeeParamas{}
@@ -26,7 +26,7 @@ func (employeeDelivery EmployeeHandler) GetEmployee(c *gin.Context) {
 		utils.BasicResponse(record, c.Writer, false, http.StatusBadRequest, err.Error(), "")
 		return
 	}
-	res, err := employeeDelivery.EmployeeService.GetEmployeeAll(record, params)
+	res, err := employee.EmployeeService.GetEmployeeAll(record, params)
 	if err != nil {
 		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
 		return

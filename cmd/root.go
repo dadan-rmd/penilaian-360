@@ -23,6 +23,7 @@ import (
 	"penilaian-360/internal/app/service/authService"
 	"penilaian-360/internal/app/service/departmentService"
 	"penilaian-360/internal/app/service/employeeService"
+	"penilaian-360/internal/app/service/evaluationService"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -158,6 +159,7 @@ func wiringService(serviceOption service.Option) *service.Services {
 		AuthMiddleware:    authMiddleware.NewAuthMiddleware(serviceOption.UserRepository),
 		DepartmentService: departmentService.NewDepartmentService(serviceOption.DepartmentRepository),
 		EmployeeService:   employeeService.NewEmployeeService(serviceOption.EmployeeRepository, serviceOption.EvaluationEmployeeRepository),
+		EvaluationService: evaluationService.NewEvaluationService(serviceOption.Db, serviceOption.EvaluationRepository, serviceOption.QuestionRepository),
 	}
 	return &svc
 }

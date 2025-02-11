@@ -8,14 +8,14 @@ import (
 
 /* Table Definition */
 type Employee struct {
-	Id         int64  `json:"id" gorm:"id"`
-	EmployeeId string `json:"employee_id" gorm:"EmployeeId"`
-	Name       string `json:"name" gorm:"Name"`
-	FirstName  string `json:"first_name" gorm:"FirstName"`
-	MiddleName string `json:"middle_name" gorm:"MiddleName"`
-	LastName   string `json:"last_name" gorm:"LastName"`
-	Department string `json:"department" gorm:"Department"`
-	Position   string `json:"position" gorm:"Position"`
+	Id         int64  `json:"id" gorm:"column:id"`
+	EmployeeId string `json:"employee_id" gorm:"column:EmployeeId"`
+	Name       string `json:"name" gorm:"column:Name"`
+	FirstName  string `json:"first_name" gorm:"column:FirstName"`
+	MiddleName string `json:"middle_name" gorm:"column:MiddleName"`
+	LastName   string `json:"last_name" gorm:"column:LastName"`
+	Department string `json:"department" gorm:"column:Department"`
+	Position   string `json:"position" gorm:"column:Position"`
 }
 
 func (Employee) TableName() string {
@@ -25,7 +25,7 @@ func (Employee) TableName() string {
 // DTO
 type (
 	EmployeeResponse struct {
-		Id   int64  `json:"id" gorm:"id"`
+		Id   int64  `json:"id"`
 		Name string `json:"name"`
 	}
 	EmployeeParamas struct {

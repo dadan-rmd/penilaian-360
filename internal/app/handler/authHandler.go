@@ -15,7 +15,7 @@ type AuthHandler struct {
 	HandlerOption
 }
 
-func (authDelivery AuthHandler) Login(c *gin.Context) {
+func (auth AuthHandler) Login(c *gin.Context) {
 	record := loggers.StartRecord(c.Request)
 	var request authModel.LoginReq
 	errBind := c.ShouldBind(&request)
@@ -30,7 +30,7 @@ func (authDelivery AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// loginRes, err := authDelivery.AuthService.Login(record, request)
+	// loginRes, err := auth.AuthService.Login(record, request)
 	// if err != nil {
 	// 	if err == authService.ErrInvalidCredential {
 	// 		utils.BasicResponse(record, c.Writer, false, http.StatusUnauthorized, err.Error(), "")

@@ -23,6 +23,9 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 	employeeHandler := handler.EmployeeHandler{
 		HandlerOption: opt,
 	}
+	evaluationHandler := handler.EvaluationHandler{
+		HandlerOption: opt,
+	}
 
 	setMode := cast.ToBool(os.Getenv("DEBUG_MODE"))
 	if setMode {
@@ -65,6 +68,14 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 
 		apiGroup.GET("/departement", departmentHandler.GetDepartment)
 		apiGroup.GET("/employee", employeeHandler.GetEmployee)
+
+		evaluationGroup := apiGroup.Group("/evaluation")
+		{
+			evaluationGroup.GET("", evaluationHandler.GetEvaluation)
+			evaluationGroup.POST("", evaluationHandler.Evaluation)
+			evaluationGroup.GET("/:id", evaluationHandler.EvaluationView)
+			evaluationGroup.DELETE("/:id", evaluationHandler.EvaluationDelete)
+		}
 	}
 
 	return r

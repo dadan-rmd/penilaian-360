@@ -7,6 +7,7 @@ import (
 	"penilaian-360/internal/app/service/authService"
 	"penilaian-360/internal/app/service/departmentService"
 	"penilaian-360/internal/app/service/employeeService"
+	"penilaian-360/internal/app/service/evaluationService"
 )
 
 // Option anything any service object needed
@@ -20,4 +21,5 @@ type Services struct {
 	AuthMiddleware    authMiddleware.IAuthMiddleware
 	DepartmentService departmentService.IDepartmentService
 	EmployeeService   employeeService.IEmployeeService
+	EvaluationService evaluationService.IEvaluationService
 }

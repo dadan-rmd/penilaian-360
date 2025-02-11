@@ -1,10 +1,10 @@
 CREATE TABLE `evaluations` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `departement_id` int(11) NOT NULL,
+  `departement_name` varchar(225) NOT NULL,
   `title` varchar(225) NOT NULL,
   `status` varchar(50) NOT NULL,
   `cc` varchar(225) DEFAULT NULL,
-  `deadline_at` DATETIME DEFAULT NULL,
+  `deadline_at` varchar(50) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 );
