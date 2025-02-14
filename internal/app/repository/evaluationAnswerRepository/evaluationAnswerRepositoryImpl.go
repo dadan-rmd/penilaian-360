@@ -21,7 +21,7 @@ func (d evaluationAnswerRepository) FindByID(id int64) (entity *evaluationModel.
 	return
 }
 
-func (d evaluationAnswerRepository) Save(tx *gorm.DB, data *evaluationModel.EvaluationAnswer) error {
+func (d evaluationAnswerRepository) Save(tx *gorm.DB, data *[]evaluationModel.EvaluationAnswer) error {
 	if tx != nil {
 		return tx.Save(&data).Error
 	} else {

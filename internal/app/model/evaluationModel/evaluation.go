@@ -2,6 +2,8 @@ package evaluationModel
 
 import (
 	"penilaian-360/internal/app/commons/constants"
+	"penilaian-360/internal/app/model/evaluatedEmployeesModel"
+	"penilaian-360/internal/app/model/evaluatorEmployeesModel"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -12,7 +14,6 @@ type Evaluation struct {
 	DepartementId int64                      `json:"departement_id"`
 	Title         string                     `json:"title"`
 	Status        constants.EvaluationStatus `json:"status"`
-	Cc            string                     `json:"cc"`
 	DeadlineAt    string                     `json:"deadline_at"`
 	CreatedAt     time.Time                  `json:"created_at" gorm:"autoCreateTime"`
 }
@@ -23,7 +24,7 @@ func (Evaluation) TableName() string {
 
 // DTO
 type (
-	DataEvaluation struct {
+	DataFormHistory struct {
 		Id            int64  `json:"id"`
 		DepartementId int64  `json:"departement_id"`
 		Title         string `json:"title"`
@@ -35,15 +36,15 @@ type (
 		Question string `json:"question"`
 		Type     string `json:"type"`
 	}
-	EvaluationRequest struct {
-		DataEvaluation
+	FormHistoryRequest struct {
+		DataFormHistory
 		Question           []DataQuestion `json:"question"`
 		IdToDeleteQuestion []int64        `json:"id_to_delete_question"`
 	}
-	EvaluationResponse struct {
+	FormHistoryResponse struct {
 		Id int64 `json:"id"`
 	}
-	EvaluationList struct {
+	FormHistoryList struct {
 		Id              int64     `json:"id"`
 		DepartementName string    `json:"department_name" gorm:"column:DepartmentName"`
 		Title           string    `json:"title"`
@@ -53,15 +54,27 @@ type (
 	}
 
 	AssignmentRequest struct {
-		EvaluatedId            []int64 `json:"evaluated_id"`
-		EvaluatedDepartementId []int64 `json:"evaluated_departement_id"`
-		EvaluatorId            []int64 `json:"evaluator_id"`
-		EvaluatorDepartementId []int64 `json:"evaluator_departement_id"`
-		Cc                     string  `json:"cc"`
+		Id          int64   `json:"id"`
+		EvaluatedId []int64 `json:"evaluated_id"`
+		EvaluatorId []int64 `json:"evaluator_id"`
+		Cc          string  `json:"cc"`
+	}
+
+	DetailForm struct {
+		EmployeeName string  `json:"employee_name"`
+		Departement  string  `json:"department"`
+		Position     string  `json:"position"`
+		Avg          float64 `json:"avg"`
+		Status       float64 `json:"status"`
+	}
+	DetailFormResponse struct {
+		DepartementName string `json:"department_name" gorm:"column:DepartmentName"`
+		EmployeeId      int64  `json:"employee_id"`
+		Data            int64  `json:"data"`
 	}
 )
 
-func (v *EvaluationRequest) Validate() error {
+func (v *FormHistoryRequest) Validate() error {
 	err := validation.ValidateStruct(v,
 		validation.Field(&v.DeadlineAt, validation.Required, validation.Date(constants.DDMMYYYY)),
 		validation.Field(&v.Title, validation.Required),
@@ -92,4 +105,26 @@ func (q *DataQuestion) Validate() error {
 			string(constants.QuestionTypeEssay),
 		)),
 	)
+}
+
+func (e *AssignmentRequest) ToEvaluatedEmployee() (entities []evaluatedEmployeesModel.EvaluatedEmployee) {
+	for _, v := range e.EvaluatedId {
+		entities = append(entities, evaluatedEmployeesModel.EvaluatedEmployee{
+			EvaluationId: e.Id,
+			EmployeeId:   v,
+		})
+	}
+	return
+}
+
+func (e *AssignmentRequest) ToEvaluatorEmployee(evaluatedEmployeeId int64) (entities []evaluatorEmployeesModel.EvaluatorEmployee) {
+	for _, v := range e.EvaluatorId {
+		entities = append(entities, evaluatorEmployeesModel.EvaluatorEmployee{
+			EvaluationId:        e.Id,
+			EvaluatedEmployeeId: evaluatedEmployeeId,
+			EmployeeId:          v,
+			Cc:                  e.Cc,
+		})
+	}
+	return
 }

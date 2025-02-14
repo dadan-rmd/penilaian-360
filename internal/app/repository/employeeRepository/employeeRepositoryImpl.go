@@ -23,3 +23,14 @@ func (d employeeRepository) FindByDepartement(departement string, ids []int64) (
 		Find(&entities).Error
 	return
 }
+
+func (d employeeRepository) FindByEmailAndAccessToken(email, accessToken string) (entity employeeModel.Employee, err error) {
+	err = d.db.Where(employeeModel.Employee{Email: email, AccessToken: accessToken}).
+		First(&entity).Error
+	return
+}
+
+func (d employeeRepository) FindByIds(ids []int64) (entity []employeeModel.Employee, err error) {
+	err = d.db.Find(&entity, ids).Error
+	return
+}

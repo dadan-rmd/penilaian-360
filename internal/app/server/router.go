@@ -14,16 +14,13 @@ import (
 
 func Router(opt handler.HandlerOption) *gin.Engine {
 
-	authHandler := handler.AuthHandler{
-		HandlerOption: opt,
-	}
 	departmentHandler := handler.DepartmentHandler{
 		HandlerOption: opt,
 	}
 	employeeHandler := handler.EmployeeHandler{
 		HandlerOption: opt,
 	}
-	evaluationHandler := handler.EvaluationHandler{
+	formHistoryHandler := handler.FormHistoryHandler{
 		HandlerOption: opt,
 	}
 
@@ -58,23 +55,20 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 	// r.MaxMultipartMemory = 8 << 20 // 8 MiB
 	r.MaxMultipartMemory = 100 * 1024 * 1024 // 100MB
 
+	// apiGroup := r.Group("/api/v1", opt.AuthMiddleware.AuthorizeEmployee())
 	apiGroup := r.Group("/api/v1")
 	{
-
-		authGroup := apiGroup.Group("/auth")
-		{
-			authGroup.POST("/login", authHandler.Login)
-		}
-
 		apiGroup.GET("/departement", departmentHandler.GetDepartment)
 		apiGroup.GET("/employee", employeeHandler.GetEmployee)
 
-		evaluationGroup := apiGroup.Group("/evaluation")
+		evaluationGroup := apiGroup.Group("/form-history")
 		{
-			evaluationGroup.GET("", evaluationHandler.GetEvaluation)
-			evaluationGroup.POST("", evaluationHandler.Evaluation)
-			evaluationGroup.GET("/:id", evaluationHandler.EvaluationView)
-			evaluationGroup.DELETE("/:id", evaluationHandler.EvaluationDelete)
+			evaluationGroup.GET("", formHistoryHandler.GetFormHistory)
+			evaluationGroup.POST("", formHistoryHandler.FormHistory)
+			evaluationGroup.GET("/:id", formHistoryHandler.FormHistoryView)
+			evaluationGroup.DELETE("/:id", formHistoryHandler.FormHistoryDelete)
+			evaluationGroup.POST("/assignment", formHistoryHandler.FormHistoryAssignment)
+			evaluationGroup.GET("/detail", formHistoryHandler.FormHistoryDetail)
 		}
 	}
 

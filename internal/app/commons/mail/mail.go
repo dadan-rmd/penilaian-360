@@ -2,119 +2,61 @@ package mail
 
 import (
 	"bytes"
-	"fmt"
-	"net/smtp"
 	"os"
 	"path"
 	"runtime"
 	"text/template"
 
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
+	"gopkg.in/gomail.v2"
 )
 
-const CONFIG_SMTP_HOST = "smtp.gmail.com"
-const CONFIG_SMTP_PORT = "587"
-const CONFIG_SENDER_NAME = "KBR <kbrprimedev@gmail.com>"
-const CONFIG_AUTH_EMAIL = "kbrprimedev@gmail.com"
-const CONFIG_AUTH_PASSWORD = "pssamdqtneaxwfwt"
-
-func SendVerifyMail(to []string, name, id string) (err error) {
-	auth := smtp.PlainAuth("", CONFIG_AUTH_EMAIL, CONFIG_AUTH_PASSWORD, CONFIG_SMTP_HOST)
-
+func SendEvaluation(to []string, cc []string, id, name, deadline string) error {
+	// Get the root path
 	_, file, _, _ := runtime.Caller(0)
 	rootPath := path.Join(file, "../../../../../")
-	t, err := template.ParseFiles(rootPath + "/assets/template/verifikasi.html")
+	tmplPath := rootPath + "/assets/template/evaluation.html"
+	t, err := template.ParseFiles(tmplPath)
 	if err != nil {
-		log.Error().Msg("open template verifikasi email")
-		return
+		log.Error().Err(err).Msg("Failed to open email template")
+		return err
 	}
 
+	// Generate email body
 	var body bytes.Buffer
-
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Verifikasi Email \n%s\n\n", mimeHeaders)))
-
-	t.Execute(&body, struct {
-		Username string
-		Url      string
+	err = t.Execute(&body, struct {
+		Name     string
+		Deadline string
+		URL      string
 	}{
-		Username: name,
-		Url:      os.Getenv("URL_VERIFIKASI") + id,
+		Name:     name,
+		Deadline: deadline,
+		URL:      os.Getenv("URL_EVALUATION") + "user-id=" + id,
 	})
-
-	// Sending email.
-	err = smtp.SendMail(CONFIG_SMTP_HOST+":"+CONFIG_SMTP_PORT, auth, CONFIG_AUTH_EMAIL, to, body.Bytes())
 	if err != nil {
-		log.Error().Msg("error SendMail : " + err.Error())
-		return
-	}
-	return
-}
-
-func SendOtpMail(to []string, name, otp string) (err error) {
-	auth := smtp.PlainAuth("", CONFIG_AUTH_EMAIL, CONFIG_AUTH_PASSWORD, CONFIG_SMTP_HOST)
-
-	_, file, _, _ := runtime.Caller(0)
-	rootPath := path.Join(file, "../../../../../")
-	t, err := template.ParseFiles(rootPath + "/assets/template/otp.html")
-	if err != nil {
-		log.Error().Msg("open template otp email")
-		return
+		log.Error().Err(err).Msg("Failed to execute email template")
+		return err
 	}
 
-	var body bytes.Buffer
-
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Kode Verifikasi OTP \n%s\n\n", mimeHeaders)))
-
-	t.Execute(&body, struct {
-		Username string
-		Otp      string
-	}{
-		Username: name,
-		Otp:      otp,
-	})
-
-	// Sending email.
-	err = smtp.SendMail(CONFIG_SMTP_HOST+":"+CONFIG_SMTP_PORT, auth, CONFIG_AUTH_EMAIL, to, body.Bytes())
-	if err != nil {
-		log.Error().Msg("error SendMail : " + err.Error())
-		return
+	// Setup email
+	m := gomail.NewMessage()
+	m.SetHeader("From", os.Getenv("CONFIG_SENDER_NAME")+" <"+os.Getenv("CONFIG_AUTH_EMAIL")+">")
+	m.SetHeader("To", to...)
+	if len(cc) > 0 {
+		m.SetHeader("Cc", cc...)
 	}
-	return
-}
+	m.SetHeader("Subject", "Verifikasi Email")
+	m.SetBody("text/html", body.String())
 
-func SendReportComment(to []string, detailEpisode, urlComment, comment string) (err error) {
-	auth := smtp.PlainAuth("", CONFIG_AUTH_EMAIL, CONFIG_AUTH_PASSWORD, CONFIG_SMTP_HOST)
+	d := gomail.NewDialer(os.Getenv("CONFIG_SMTP_HOST"), cast.ToInt(os.Getenv("CONFIG_SMTP_PORT")), os.Getenv("CONFIG_AUTH_EMAIL"), os.Getenv("CONFIG_AUTH_PASSWORD"))
 
-	_, file, _, _ := runtime.Caller(0)
-	rootPath := path.Join(file, "../../../../../")
-	t, err := template.ParseFiles(rootPath + "/assets/template/report-comment.html")
-	if err != nil {
-		log.Error().Msg("open template report-comment")
-		return
+	// Send email
+	if err := d.DialAndSend(m); err != nil {
+		log.Error().Err(err).Msg("Failed to send email")
+		return err
 	}
 
-	var body bytes.Buffer
-
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Konfirmasi Pelanggaran Aturan Penggunaan - Tindakan Diperlukan\n%s\n\n", mimeHeaders)))
-
-	t.Execute(&body, struct {
-		UrlEpisode string
-		Url        string
-		Comment    string
-	}{
-		UrlEpisode: os.Getenv("HOST_KBRPRIME") + "/podcast/" + detailEpisode,
-		Url:        os.Getenv("HOST_API_ANALYTICS_KBRPRIME") + urlComment,
-		Comment:    comment,
-	})
-
-	// Sending email.
-	err = smtp.SendMail(CONFIG_SMTP_HOST+":"+CONFIG_SMTP_PORT, auth, CONFIG_AUTH_EMAIL, to, body.Bytes())
-	if err != nil {
-		log.Error().Msg("error SendMail : " + err.Error())
-		return
-	}
-	return
+	log.Info().Msg("Email sent successfully!")
+	return nil
 }

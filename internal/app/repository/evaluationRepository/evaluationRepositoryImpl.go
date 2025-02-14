@@ -16,7 +16,7 @@ func NewEvaluationRepository(db *gorm.DB) IEvaluationRepository {
 	return &evaluationRepository{db}
 }
 
-func (d evaluationRepository) GetWithPaging(paging datapaging.Datapaging) (data []evaluationModel.EvaluationList, count int64, err error) {
+func (d evaluationRepository) GetWithPaging(paging datapaging.Datapaging) (data []evaluationModel.FormHistoryList, count int64, err error) {
 	db := d.db.Model(&evaluationModel.Evaluation{}).
 		Select("evaluations.*, master_department.DepartmentName").
 		Joins("JOIN master_department on master_department.id = evaluations.departement_id").
@@ -36,6 +36,13 @@ func (d evaluationRepository) GetWithPaging(paging datapaging.Datapaging) (data 
 func (d evaluationRepository) FindByID(id int64) (entity *evaluationModel.Evaluation, err error) {
 	db := d.db.Preload(clause.Associations)
 	err = db.First(&entity, "id=? ", id).Error
+	return
+}
+func (d evaluationRepository) FindDepartmentNameByID(id int64) (DepartmentName string, err error) {
+	err = d.db.Model(&evaluationModel.Evaluation{}).
+		Select("master_department.DepartmentName").
+		Joins("Join master_department on master_department.id = evaluations.departement_id").
+		Pluck("DepartmentName", &DepartmentName).Error
 	return
 }
 

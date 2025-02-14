@@ -1,45 +1,102 @@
 package authMiddleware
 
 import (
-	"os"
+	"errors"
 	"penilaian-360/internal/app/commons/jsonHttpResponse"
-	"penilaian-360/internal/app/repository/userRepository"
+	"penilaian-360/internal/app/commons/jwtHelper"
+	"penilaian-360/internal/app/model/employeeModel"
+	"penilaian-360/internal/app/repository/employeeRepository"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	ErrInvalidToken = errors.New("invalid token")
+	ErrUserNotFound = errors.New("user not found")
+	ErrTokenRevoked = errors.New("token revoked")
+)
+
 type authMiddleware struct {
-	userRepo userRepository.IUserRepository
+	employeeRepo employeeRepository.IEmployeeRepository
 }
 
-func NewAuthMiddleware(userRepo userRepository.IUserRepository) IAuthMiddleware {
-	return &authMiddleware{userRepo}
+func NewAuthMiddleware(employeeRepo employeeRepository.IEmployeeRepository) IAuthMiddleware {
+	return &authMiddleware{employeeRepo}
 }
 
-func (auth *authMiddleware) BasicAuthenticate() gin.HandlerFunc {
+func (auth *authMiddleware) AuthorizeEmployee() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username, password, ok := c.Request.BasicAuth()
-		if !ok {
+		bearerToken := c.GetHeader("Authorization")
+		bearerTokenSplit := strings.Split(bearerToken, " ")
+
+		if len(bearerTokenSplit) < 2 {
 			res := jsonHttpResponse.FailedResponse{
 				Status:       jsonHttpResponse.FailedStatus,
 				ResponseCode: "00",
-				Message:      "invalid basic auth credentials",
+				Message:      "invalid token",
 			}
 			jsonHttpResponse.Unauthorized(c, res)
 			c.Abort()
 			return
 		}
 
-		isValid := (username == os.Getenv("AUTH_BASIC_USERNAME")) && (password == os.Getenv("AUTH_BASIC_PASSWORD"))
-		if !isValid {
+		jwtToken := bearerTokenSplit[1]
+		employee, err := auth.getUserFromJWTWithRoleValidation(jwtToken)
+		if err != nil {
+			if err == jwtHelper.ErrTokenExpired {
+				res := jsonHttpResponse.FailedResponse{
+					Status:       jsonHttpResponse.FailedStatus,
+					ResponseCode: "00",
+					Message:      err.Error(),
+				}
+				jsonHttpResponse.Unauthorized(c, res)
+				c.Abort()
+				return
+			}
+
 			res := jsonHttpResponse.FailedResponse{
 				Status:       jsonHttpResponse.FailedStatus,
 				ResponseCode: "00",
-				Message:      "invalid basic auth credentials",
+				Message:      "invalid token",
 			}
-			jsonHttpResponse.Unauthorized(c, res)
+			jsonHttpResponse.InternalServerError(c, res)
 			c.Abort()
 			return
 		}
+		//put into user context
+		c.Set("employee", employee)
 	}
+}
+
+func (auth *authMiddleware) getUserFromJWTWithRoleValidation(jwtToken string) (employee employeeModel.Employee, err error) {
+	if jwtToken == "" {
+		err = ErrInvalidToken
+		return
+	}
+	jwtTokenClaims, err := jwtHelper.DecodeJWT(jwtToken)
+	if err != nil {
+		err = ErrInvalidToken
+		return
+	}
+	employee, err = auth.employeeRepo.FindByEmailAndAccessToken(jwtTokenClaims.Data.Email, jwtTokenClaims.Data.AccessToken)
+	if err != nil {
+		err = ErrUserNotFound
+		return
+	}
+	return
+}
+
+func (auth *authMiddleware) GetEmployee(c *gin.Context) (entity employeeModel.Employee, err error) {
+	value, exists := c.Get("employee")
+	if !exists {
+		err = ErrUserNotFound
+		return
+	}
+	entity, ok := value.(employeeModel.Employee)
+	if !ok {
+		err = ErrInvalidToken
+		return
+	}
+	return
 }

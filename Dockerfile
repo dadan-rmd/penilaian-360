@@ -13,4 +13,11 @@ COPY --from=builder /app/penilaian-360 /app/penilaian-360
 RUN apk add --no-cache tzdata ca-certificates libc6-compat
 
 WORKDIR /app
+RUN mkdir -p /app/assets/template \
+    && chown -R $(id -u $(whoami)):0 /app/assets/template \
+    && chmod -R g+w /app/assets/template
+
+WORKDIR /app
+COPY "./assets/template/" /app/assets/template/
+
 ENTRYPOINT ["/app/penilaian-360"]

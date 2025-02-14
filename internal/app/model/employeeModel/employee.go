@@ -8,14 +8,16 @@ import (
 
 /* Table Definition */
 type Employee struct {
-	Id         int64  `json:"id" gorm:"column:id"`
-	EmployeeId string `json:"employee_id" gorm:"column:EmployeeId"`
-	Name       string `json:"name" gorm:"column:Name"`
-	FirstName  string `json:"first_name" gorm:"column:FirstName"`
-	MiddleName string `json:"middle_name" gorm:"column:MiddleName"`
-	LastName   string `json:"last_name" gorm:"column:LastName"`
-	Department string `json:"department" gorm:"column:Department"`
-	Position   string `json:"position" gorm:"column:Position"`
+	Id          int64  `json:"id" gorm:"column:id"`
+	EmployeeId  string `json:"employee_id" gorm:"column:EmployeeId"`
+	Name        string `json:"name" gorm:"column:Name"`
+	FirstName   string `json:"first_name" gorm:"column:FirstName"`
+	MiddleName  string `json:"middle_name" gorm:"column:MiddleName"`
+	LastName    string `json:"last_name" gorm:"column:LastName"`
+	Department  string `json:"department" gorm:"column:Department"`
+	Position    string `json:"position" gorm:"column:Position"`
+	Email       string `json:"email" gorm:"column:Email"`
+	AccessToken string `json:"access_token" gorm:"column:AccessToken"`
 }
 
 func (Employee) TableName() string {

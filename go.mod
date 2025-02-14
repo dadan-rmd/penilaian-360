@@ -5,12 +5,12 @@ go 1.18
 require (
 	github.com/albrow/forms v0.3.3
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.9+incompatible
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/go-sql-driver/mysql v1.7.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/inhies/go-bytesize v0.0.0-20220417184213-4913239db9cf
@@ -27,6 +27,7 @@ require (
 	github.com/stoewer/go-strcase v1.2.0
 	golang.org/x/crypto v0.9.0
 	golang.org/x/oauth2 v0.6.0
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gorm.io/driver/mysql v1.4.7
 	gorm.io/gorm v1.24.5
 )
@@ -35,6 +36,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	golang.org/x/time v0.1.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
 
 require (

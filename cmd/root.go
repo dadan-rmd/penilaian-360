@@ -13,17 +13,17 @@ import (
 	"penilaian-360/internal/app/repository"
 	"penilaian-360/internal/app/repository/departmentRepository"
 	"penilaian-360/internal/app/repository/employeeRepository"
+	"penilaian-360/internal/app/repository/evaluatedEmployeeRepository"
 	"penilaian-360/internal/app/repository/evaluationAnswerRepository"
-	"penilaian-360/internal/app/repository/evaluationEmployeeRepository"
 	"penilaian-360/internal/app/repository/evaluationRepository"
+	"penilaian-360/internal/app/repository/evaluatorEmployeeRepository"
 	"penilaian-360/internal/app/repository/questionRepository"
 	"penilaian-360/internal/app/repository/userRepository"
 	"penilaian-360/internal/app/server"
 	"penilaian-360/internal/app/service"
-	"penilaian-360/internal/app/service/authService"
 	"penilaian-360/internal/app/service/departmentService"
 	"penilaian-360/internal/app/service/employeeService"
-	"penilaian-360/internal/app/service/evaluationService"
+	"penilaian-360/internal/app/service/formHistoryService"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -140,13 +140,14 @@ func start() {
 }
 func wiringRepository(repoOption repository.Option) *repository.Repositories {
 	repo := repository.Repositories{
-		UserRepository:               userRepository.NewUserRepository(repoOption.Db),
-		EvaluationRepository:         evaluationRepository.NewEvaluationRepository(repoOption.Db),
-		QuestionRepository:           questionRepository.NewQuestionRepository(repoOption.Db),
-		EvaluationAnswerRepository:   evaluationAnswerRepository.NewEvaluationAnswerRepository(repoOption.Db),
-		EvaluationEmployeeRepository: evaluationEmployeeRepository.NewEvaluationEmployeeRepository(repoOption.Db),
-		DepartmentRepository:         departmentRepository.NewDepartmentRepository(repoOption.Db),
-		EmployeeRepository:           employeeRepository.NewEmployeeRepository(repoOption.Db),
+		UserRepository:              userRepository.NewUserRepository(repoOption.Db),
+		EvaluationRepository:        evaluationRepository.NewEvaluationRepository(repoOption.Db),
+		QuestionRepository:          questionRepository.NewQuestionRepository(repoOption.Db),
+		EvaluationAnswerRepository:  evaluationAnswerRepository.NewEvaluationAnswerRepository(repoOption.Db),
+		DepartmentRepository:        departmentRepository.NewDepartmentRepository(repoOption.Db),
+		EmployeeRepository:          employeeRepository.NewEmployeeRepository(repoOption.Db),
+		EvaluatorEmployeeRepository: evaluatorEmployeeRepository.NewEvaluatorEmployeeRepository(repoOption.Db),
+		EvaluatedEmployeeRepository: evaluatedEmployeeRepository.NewEvaluatedEmployeeRepository(repoOption.Db),
 	}
 
 	return &repo
@@ -155,11 +156,10 @@ func wiringRepository(repoOption repository.Option) *repository.Repositories {
 func wiringService(serviceOption service.Option) *service.Services {
 	// trx := transaction.NewTransaction(serviceOption.Db)
 	svc := service.Services{
-		AuthService:       authService.NewAuthService(serviceOption.Db),
-		AuthMiddleware:    authMiddleware.NewAuthMiddleware(serviceOption.UserRepository),
-		DepartmentService: departmentService.NewDepartmentService(serviceOption.DepartmentRepository),
-		EmployeeService:   employeeService.NewEmployeeService(serviceOption.EmployeeRepository, serviceOption.EvaluationEmployeeRepository),
-		EvaluationService: evaluationService.NewEvaluationService(serviceOption.Db, serviceOption.EvaluationRepository, serviceOption.QuestionRepository),
+		AuthMiddleware:     authMiddleware.NewAuthMiddleware(serviceOption.EmployeeRepository),
+		DepartmentService:  departmentService.NewDepartmentService(serviceOption.DepartmentRepository),
+		EmployeeService:    employeeService.NewEmployeeService(serviceOption.EmployeeRepository, serviceOption.EvaluatorEmployeeRepository, serviceOption.EvaluatedEmployeeRepository),
+		FormHistoryService: formHistoryService.NewFormHistoryService(serviceOption.Db, serviceOption.EvaluationRepository, serviceOption.QuestionRepository, serviceOption.EmployeeRepository, serviceOption.EvaluationAnswerRepository, serviceOption.EvaluatorEmployeeRepository, serviceOption.EvaluatedEmployeeRepository),
 	}
 	return &svc
 }

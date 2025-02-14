@@ -8,8 +8,9 @@ import (
 )
 
 type IEvaluationRepository interface {
-	GetWithPaging(paging datapaging.Datapaging) (data []evaluationModel.EvaluationList, count int64, err error)
+	GetWithPaging(paging datapaging.Datapaging) (data []evaluationModel.FormHistoryList, count int64, err error)
 	FindByID(id int64) (entity *evaluationModel.Evaluation, err error)
 	Save(tx *gorm.DB, data *evaluationModel.Evaluation) error
 	Delete(tx *gorm.DB, id int64) error
+	FindDepartmentNameByID(id int64) (DepartmentName string, err error)
 }

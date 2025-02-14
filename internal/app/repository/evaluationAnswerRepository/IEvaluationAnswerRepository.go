@@ -8,6 +8,6 @@ import (
 
 type IEvaluationAnswerRepository interface {
 	FindByID(id int64) (entity *evaluationModel.EvaluationAnswer, err error)
-	Save(tx *gorm.DB, data *evaluationModel.EvaluationAnswer) error
+	Save(tx *gorm.DB, data *[]evaluationModel.EvaluationAnswer) error
 	Delete(evaluationAnswerData evaluationModel.EvaluationAnswer) error
 }
