@@ -43,7 +43,7 @@ func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapag
 		Select("evaluator_employees.employee_id,evaluator_employees.avg,master_karyawan.Name,master_karyawan.Department,master_karyawan.Position").
 		Joins("Join master_karyawan on master_karyawan.id = evaluator_employees.employee_id").
 		Joins("Join evaluated_employees on evaluated_employees.id = evaluator_employees.evaluated_employee_id").
-		Where("evaluated_employees.evaluated_employee_id = ?", evaluatedEmployeeId).
+		Where("evaluated_employees.employee_id = ?", evaluatedEmployeeId).
 		Where(evaluatorEmployeesModel.EvaluatorEmployee{
 			EvaluationId: evaluationId,
 		}).

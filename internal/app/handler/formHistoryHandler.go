@@ -110,7 +110,7 @@ func (evaluation FormHistoryHandler) FormHistoryDetail(c *gin.Context) {
 		Limit: cast.ToInt(c.Query("page_size")),
 	}, evaluatorEmployeesModel.FormHistoryDetailParams{
 		ID:           cast.ToInt64(c.Query("evaluation_id")),
-		EmployeeIdID: cast.ToInt64(c.Query("employee_id_id")),
+		EmployeeIdID: cast.ToInt64(c.Query("employee_id")),
 	})
 	if err != nil {
 		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
