@@ -33,3 +33,15 @@ func (employee EmployeeHandler) GetEmployee(c *gin.Context) {
 	}
 	utils.BasicResponse(record, c.Writer, true, http.StatusOK, res, "Success")
 }
+
+func (employee EmployeeHandler) CreateToken(c *gin.Context) {
+	var (
+		record = loggers.StartRecord(c.Request)
+	)
+	res, err := employee.EmployeeService.CreateToken(record)
+	if err != nil {
+		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
+		return
+	}
+	utils.BasicResponse(record, c.Writer, true, http.StatusOK, res, "Success")
+}

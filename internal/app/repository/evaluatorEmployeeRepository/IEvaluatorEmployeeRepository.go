@@ -12,4 +12,5 @@ type IEvaluatorEmployeeRepository interface {
 	UpdateEmailSentByEvaluatedEmployeeIdAndEmployeeId(ids, evaluatedEmployeeId []int64) error
 	FindByEvaluatorId(paging datapaging.Datapaging, evaluationId, evaluatedEmployeeId int64) (entities []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error)
 	Save(tx *gorm.DB, data *[]evaluatorEmployeesModel.EvaluatorEmployee) error
+	RetrieveListWithPaging(paging datapaging.Datapaging, employeeId int64, email, notDepartement, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error)
 }

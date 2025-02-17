@@ -47,3 +47,6 @@ CREATE TABLE `evaluation_answers` (
   PRIMARY KEY (`id`)
 );
 
+ALTER TABLE evaluated_employees ADD total_avg FLOAT DEFAULT 0;
+
+

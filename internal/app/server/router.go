@@ -23,6 +23,9 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 	formHistoryHandler := handler.FormHistoryHandler{
 		HandlerOption: opt,
 	}
+	evaluationHandler := handler.EvaluationHandler{
+		HandlerOption: opt,
+	}
 
 	setMode := cast.ToBool(os.Getenv("DEBUG_MODE"))
 	if setMode {
@@ -55,22 +58,28 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 	// r.MaxMultipartMemory = 8 << 20 // 8 MiB
 	r.MaxMultipartMemory = 100 * 1024 * 1024 // 100MB
 
-	// apiGroup := r.Group("/api/v1", opt.AuthMiddleware.AuthorizeEmployee())
-	apiGroup := r.Group("/api/v1")
+	apiGroup := r.Group("/api/v1", opt.AuthMiddleware.AuthorizeEmployee())
+	// apiGroup := r.Group("/api/v1")
 	{
 		apiGroup.GET("/departement", departmentHandler.GetDepartment)
 		apiGroup.GET("/employee", employeeHandler.GetEmployee)
 
-		evaluationGroup := apiGroup.Group("/form-history")
+		formHistoryGroup := apiGroup.Group("/form-history")
 		{
-			evaluationGroup.GET("", formHistoryHandler.GetFormHistory)
-			evaluationGroup.POST("", formHistoryHandler.FormHistory)
-			evaluationGroup.GET("/:id", formHistoryHandler.FormHistoryView)
-			evaluationGroup.DELETE("/:id", formHistoryHandler.FormHistoryDelete)
-			evaluationGroup.POST("/assignment", formHistoryHandler.FormHistoryAssignment)
-			evaluationGroup.GET("/detail", formHistoryHandler.FormHistoryDetail)
+			formHistoryGroup.GET("", formHistoryHandler.GetFormHistory)
+			formHistoryGroup.POST("", formHistoryHandler.FormHistory)
+			formHistoryGroup.GET("/:id", formHistoryHandler.FormHistoryView)
+			formHistoryGroup.DELETE("/:id", formHistoryHandler.FormHistoryDelete)
+			formHistoryGroup.POST("/assignment", formHistoryHandler.FormHistoryAssignment)
+			formHistoryGroup.GET("/detail", formHistoryHandler.FormHistoryDetail)
+		}
+		evaluationGroup := apiGroup.Group("/evaluation")
+		{
+			evaluationGroup.GET("/list", evaluationHandler.EvaluationList)
+			evaluationGroup.GET("/divisi", evaluationHandler.EvaluationDepartementList)
 		}
 	}
+	r.GET("/api/v1/create-token", employeeHandler.CreateToken)
 
 	return r
 }

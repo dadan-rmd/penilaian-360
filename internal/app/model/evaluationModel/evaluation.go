@@ -59,19 +59,6 @@ type (
 		EvaluatorId []int64 `json:"evaluator_id"`
 		Cc          string  `json:"cc"`
 	}
-
-	DetailForm struct {
-		EmployeeName string  `json:"employee_name"`
-		Departement  string  `json:"department"`
-		Position     string  `json:"position"`
-		Avg          float64 `json:"avg"`
-		Status       float64 `json:"status"`
-	}
-	DetailFormResponse struct {
-		DepartementName string `json:"department_name" gorm:"column:DepartmentName"`
-		EmployeeId      int64  `json:"employee_id"`
-		Data            int64  `json:"data"`
-	}
 )
 
 func (v *FormHistoryRequest) Validate() error {

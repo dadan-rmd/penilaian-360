@@ -40,19 +40,32 @@ func (d evaluatorEmployeeRepository) UpdateEmailSentByEvaluatedEmployeeIdAndEmpl
 func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapaging, evaluationId, evaluatedEmployeeId int64) (entities []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
 	db := d.db.
 		Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
-		Select("evaluator_employees.employee_id,evaluator_employees.avg,master_karyawan.Name,master_karyawan.Department,master_karyawan.Position").
-		Joins("Join master_karyawan on master_karyawan.id = evaluator_employees.employee_id").
-		Joins("Join evaluated_employees on evaluated_employees.id = evaluator_employees.evaluated_employee_id").
+		Select(`
+			evaluator_employees.id,
+			evaluator_employees.employee_id,
+			evaluator_employees.avg,
+			master_karyawan.Name,
+			master_karyawan.Department,
+			master_karyawan.Position,
+			CASE 
+				WHEN evaluator_employees.avg > 0 THEN 'Sudah Menilai' 
+				ELSE 'Belum Menilai' 
+			END AS status
+		`).
+		Joins("JOIN master_karyawan ON master_karyawan.id = evaluator_employees.employee_id").
+		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
 		Where("evaluated_employees.employee_id = ?", evaluatedEmployeeId).
 		Where(evaluatorEmployeesModel.EvaluatorEmployee{
 			EvaluationId: evaluationId,
 		}).
-		Order("evaluator_employees.id desc").
+		Order("evaluator_employees.id DESC").
 		Count(&count)
+
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
-		db.Offset(pg.GetOffset()).Limit(paging.Limit)
+		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
+
 	err = db.Find(&entities).Error
 	if err != nil {
 		return
@@ -66,4 +79,47 @@ func (d evaluatorEmployeeRepository) Save(tx *gorm.DB, data *[]evaluatorEmployee
 	} else {
 		return d.db.Save(&data).Error
 	}
+}
+
+func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Datapaging, employeeId int64, email, notDepartement, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+	slqSelect := `evaluated_employees.id,
+				evaluated_employees.evaluation_id,
+				evaluated_employees.total_avg,
+				master_karyawan.Name, 
+				master_karyawan.Department, 
+				master_karyawan.Position`
+	db := d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
+		Where("evaluator_employees.employee_id = ?", employeeId).
+		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
+		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
+		Order("evaluated_employees.id desc")
+	if notDepartement != "" {
+		if email != "" {
+			db.Select(slqSelect+`,
+				CASE 
+					WHEN evaluator_employees.cc = `+email+` THEN 'lihat-penilaian' 
+					ELSE NULL 
+				END AS status
+			`).Where("master_karyawan.Department != ?", notDepartement)
+		} else {
+			db.Select(slqSelect)
+		}
+	} else {
+		db.Select(slqSelect)
+	}
+	if departement != "" {
+		db.Where("master_karyawan.Department = ?", departement)
+	}
+	if search != "" {
+		db.Where("master_karyawan.Name like '%" + search + "%' or master_karyawan.Position like '%" + search + "%'")
+	}
+	db.Count(&count)
+
+	if paging.Page != 0 {
+		pg := datapaging.New(paging.Limit, paging.Page, []string{})
+		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
+	}
+
+	err = db.Scan(&data).Error
+	return
 }

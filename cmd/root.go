@@ -23,6 +23,7 @@ import (
 	"penilaian-360/internal/app/service"
 	"penilaian-360/internal/app/service/departmentService"
 	"penilaian-360/internal/app/service/employeeService"
+	"penilaian-360/internal/app/service/evaluationService"
 	"penilaian-360/internal/app/service/formHistoryService"
 
 	"github.com/go-playground/validator/v10"
@@ -160,6 +161,7 @@ func wiringService(serviceOption service.Option) *service.Services {
 		DepartmentService:  departmentService.NewDepartmentService(serviceOption.DepartmentRepository),
 		EmployeeService:    employeeService.NewEmployeeService(serviceOption.EmployeeRepository, serviceOption.EvaluatorEmployeeRepository, serviceOption.EvaluatedEmployeeRepository),
 		FormHistoryService: formHistoryService.NewFormHistoryService(serviceOption.Db, serviceOption.EvaluationRepository, serviceOption.QuestionRepository, serviceOption.EmployeeRepository, serviceOption.EvaluationAnswerRepository, serviceOption.EvaluatorEmployeeRepository, serviceOption.EvaluatedEmployeeRepository),
+		EvaluationService:  evaluationService.NewEvaluationService(serviceOption.Db, serviceOption.EvaluationRepository, serviceOption.QuestionRepository, serviceOption.EmployeeRepository, serviceOption.EvaluationAnswerRepository, serviceOption.EvaluatorEmployeeRepository, serviceOption.EvaluatedEmployeeRepository),
 	}
 	return &svc
 }

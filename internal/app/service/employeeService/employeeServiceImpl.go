@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"penilaian-360/internal/app/commons/constants"
+	"penilaian-360/internal/app/commons/jwtHelper"
 	"penilaian-360/internal/app/commons/loggers"
 	"penilaian-360/internal/app/model/employeeModel"
 	"penilaian-360/internal/app/repository/employeeRepository"
@@ -57,5 +58,16 @@ func (s employeeService) GetEmployeeAll(record *loggers.Data, params employeeMod
 	for _, v := range entities {
 		res = append(res, v.ToEmployeeResponse())
 	}
+	return
+}
+
+func (s employeeService) CreateToken(record *loggers.Data) (token string, err error) {
+	token, err = jwtHelper.EncodeJWT("dramdani159@gmail.com", "3d8fa1adddc5f2afc0cdd183f6501517")
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Generated Token:", token)
+	}
+
 	return
 }

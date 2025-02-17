@@ -17,11 +17,16 @@ type (
 
 	// DTO
 	EvaluatorEmployeeList struct {
+		Id           int64   `json:"id"`
 		EmployeeName string  `json:"employee_name" gorm:"column:Name"`
 		Department   string  `json:"department" gorm:"column:Department"`
 		Position     string  `json:"position" gorm:"column:Position"`
 		Avg          float64 `json:"avg"`
 		Status       string  `json:"status"`
+	}
+	EvaluatorEmployeeParams struct {
+		Departement string
+		Search      string
 	}
 	FormHistoryDetailResponse struct {
 		Department string                  `json:"department" `
