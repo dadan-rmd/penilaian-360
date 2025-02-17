@@ -1,6 +1,6 @@
 module penilaian-360
 
-go 1.18
+go 1.21
 
 require (
 	github.com/albrow/forms v0.3.3
