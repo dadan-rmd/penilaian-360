@@ -50,3 +50,13 @@ func (d questionRepository) DeleteEvaluationId(tx *gorm.DB, evaluationId int64) 
 		return d.db.Where("evaluation_id = ?", evaluationId).Delete(&questionModel.Question{}).Error
 	}
 }
+
+func (d questionRepository) CountRate(tx *gorm.DB, ids []int64) (count int64, err error) {
+	if tx != nil {
+		err = tx.Model(&questionModel.Question{}).Where("id in (?) and type = 'rate'", ids).Count(&count).Error
+		return
+	} else {
+		err = d.db.Model(&questionModel.Question{}).Where("id in (?) and type = 'rate'", ids).Count(&count).Error
+		return
+	}
+}

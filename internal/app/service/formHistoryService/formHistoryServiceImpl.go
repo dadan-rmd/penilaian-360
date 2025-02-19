@@ -181,6 +181,38 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		if err = tx.Commit().Error; err != nil {
 			loggers.Logf(record, fmt.Sprintf("Err, Commit %v", err))
 		}
+
+		employees, err := s.employeeRepo.FindByIds(request.EvaluatorId)
+		if err != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, employees FindByIds %v", err))
+			return
+		}
+
+		evaluatedEmployees, err := s.employeeRepo.FindNameAndEmployedIDByIds(request.EvaluatedId)
+		if err != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, employees FindByIds %v", err))
+			return
+		}
+		parsedTime, _ := time.Parse(constants.DDMMYYYY, entity.DeadlineAt)
+		deadline := parsedTime.Format("02 January 2006")
+		cc := strings.Split(request.Cc, ",")
+		go func() {
+			for _, evaluatedEmployee := range evaluatedEmployees {
+				for _, v := range employees {
+					err = mail.SendEvaluation([]string{v.Email}, cc, cast.ToString(evaluatedEmployee.Name), v.Name, deadline)
+					if err == nil {
+						employeeID = append(employeeID, v.Id)
+					} else {
+						fmt.Println("error nih bos->", err)
+					}
+				}
+				evaluatedEmployeeID = append(evaluatedEmployeeID, evaluatedEmployee.EvaluatedId)
+			}
+			err = s.evaluatorEmployeeRepo.UpdateEmailSentByEvaluatedEmployeeIdAndEmployeeId(employeeID, evaluatedEmployeeID)
+			if err != nil {
+				fmt.Println("error UpdateEmailSentById : %v", err)
+			}
+		}()
 	}()
 	evaluateds := request.ToEvaluatedEmployee()
 	err = s.evaluatedEmployeeRepo.Save(tx, &evaluateds)
@@ -197,11 +229,6 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		loggers.Logf(record, fmt.Sprintf("Err, evaluator employee Save %v", err))
 		return
 	}
-	employees, err := s.employeeRepo.FindByIds(request.EvaluatorId)
-	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, employees FindByIds %v", err))
-		return
-	}
 
 	questions, err := s.questionRepo.FindByEvaluationId(request.Id)
 	if err != nil {
@@ -211,9 +238,9 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 	for _, evaluator := range evaluators {
 		for _, question := range questions {
 			evaluationAnswer = append(evaluationAnswer, evaluationModel.EvaluationAnswer{
-				EvaluationId:         request.Id,
-				EvaluationEmployeeId: evaluator.Id,
-				QuestionId:           question.Id,
+				EvaluationId:        request.Id,
+				EvaluatorEmployeeId: evaluator.Id,
+				QuestionId:          question.Id,
 			})
 		}
 	}
@@ -223,24 +250,6 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		return
 	}
 
-	parsedTime, _ := time.Parse(constants.DDMMYYYY, entity.DeadlineAt)
-	deadline := parsedTime.Format("02 January 2006")
-	cc := strings.Split(request.Cc, ",")
-	go func() {
-		for _, evaluated := range evaluateds {
-			for _, v := range employees {
-				err = mail.SendEvaluation([]string{v.Email}, cc, cast.ToString(evaluated.EmployeeId), v.Name, deadline)
-				if err == nil {
-					employeeID = append(employeeID, v.Id)
-				}
-			}
-			evaluatedEmployeeID = append(evaluatedEmployeeID, evaluated.Id)
-		}
-		err = s.evaluatorEmployeeRepo.UpdateEmailSentByEvaluatedEmployeeIdAndEmployeeId(employeeID, evaluatedEmployeeID)
-		if err != nil {
-			fmt.Println("error UpdateEmailSentById : %v", err)
-		}
-	}()
 	return
 }
 

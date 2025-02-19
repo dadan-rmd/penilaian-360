@@ -2,6 +2,7 @@ package employeeRepository
 
 import (
 	"penilaian-360/internal/app/model/employeeModel"
+	"penilaian-360/internal/app/model/evaluatedEmployeesModel"
 
 	"gorm.io/gorm"
 )
@@ -32,5 +33,14 @@ func (d employeeRepository) FindByEmailAndAccessToken(email, accessToken string)
 
 func (d employeeRepository) FindByIds(ids []int64) (entity []employeeModel.Employee, err error) {
 	err = d.db.Find(&entity, ids).Error
+	return
+}
+
+func (d employeeRepository) FindNameAndEmployedIDByIds(ids []int64) (entities []employeeModel.EmployedEmployeeResponse, err error) {
+	err = d.db.Model(evaluatedEmployeesModel.EvaluatedEmployee{}).
+		Select("master_karyawan.Name,evaluated_employees.id as evaluated_id").
+		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
+		Where("master_karyawan.id in (?)", ids).
+		Find(&entities).Error
 	return
 }

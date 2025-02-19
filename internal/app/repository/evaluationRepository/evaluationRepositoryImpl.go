@@ -5,7 +5,6 @@ import (
 	"penilaian-360/internal/app/model/evaluationModel"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type evaluationRepository struct {
@@ -34,8 +33,7 @@ func (d evaluationRepository) GetWithPaging(paging datapaging.Datapaging) (data 
 }
 
 func (d evaluationRepository) FindByID(id int64) (entity *evaluationModel.Evaluation, err error) {
-	db := d.db.Preload(clause.Associations)
-	err = db.First(&entity, "id=? ", id).Error
+	err = d.db.First(&entity, id).Error
 	return
 }
 func (d evaluationRepository) FindDepartmentNameByID(id int64) (DepartmentName string, err error) {

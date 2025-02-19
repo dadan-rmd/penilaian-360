@@ -21,6 +21,20 @@ func (d evaluationAnswerRepository) FindByID(id int64) (entity *evaluationModel.
 	return
 }
 
+func (d evaluationAnswerRepository) FindByEvaluationAndevaluatorID(evaluationId, evaluatorEmployeeId int64) (entity *[]evaluationModel.EvaluationAnswerResponse, err error) {
+	err = d.db.Model(&evaluationModel.EvaluationAnswer{}).
+		Select(`
+			questions.question as question_name,
+			questions.type,
+			evaluation_answers.*
+
+		`).
+		Joins("JOIN questions on questions.id = evaluation_answers.question_id").
+		Where("evaluation_answers.evaluation_id=? and evaluation_answers.evaluator_employee_id=? ", evaluationId, evaluatorEmployeeId).
+		Find(&entity).Error
+	return
+}
+
 func (d evaluationAnswerRepository) Save(tx *gorm.DB, data *[]evaluationModel.EvaluationAnswer) error {
 	if tx != nil {
 		return tx.Save(&data).Error

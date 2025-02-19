@@ -111,11 +111,12 @@
                 <p>Hallo {{ .Name }},</p>
                 <p>Tim HRD sedang mengadakan <strong>penilaian 360</strong> bagi semua karyawan. Jika kamu tidak sibuk,
                     sempatkan waktumu untuk mengisi form ya!</p>
-                <p>Perlu diingat, batas pengisian form terakhir tanggal <strong
-                        style="color: red;">{{ .Deadline }}</strong>. Tolong jangan sampai terlewat ya!</p>
-                <p>Berikut adalah link untuk pengisian form:</p>
+                <p>Kamu diminta untuk menilai <strong>{{ .EvaluatedName }}</strong>.</p>
+                <p>Silahkan melakukan penilaian pada link berikut:</p>
                 <p><a href="{{ .URL }}" target="_blank">{{ .URL }}</a></p>
                 <p>Link ini bersifat unik, sehingga hanya kamu yang bisa mengaksesnya.</p>
+                <p>Perlu diingat, batas pengisian form terakhir tanggal <strong
+                    style="color: red;">{{ .Deadline }}</strong>. Tolong jangan sampai terlewat ya!</p>
                 <p>Salam hangat,<br>HRD KBR</p>
             </td>
         </tr>

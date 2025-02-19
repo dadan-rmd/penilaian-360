@@ -63,6 +63,7 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 	{
 		apiGroup.GET("/departement", departmentHandler.GetDepartment)
 		apiGroup.GET("/employee", employeeHandler.GetEmployee)
+		apiGroup.GET("/user", employeeHandler.GetUser)
 
 		formHistoryGroup := apiGroup.Group("/form-history")
 		{
@@ -77,6 +78,12 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 		{
 			evaluationGroup.GET("/list", evaluationHandler.EvaluationList)
 			evaluationGroup.GET("/divisi", evaluationHandler.EvaluationDepartementList)
+			evaluationGroup.GET("/:evaluated_id", evaluationHandler.EvaluationDetail)
+			evaluationScoreGroup := evaluationGroup.Group("/score")
+			{
+				evaluationScoreGroup.GET("/detail", evaluationHandler.ScoreDetail)
+				evaluationScoreGroup.POST("", evaluationHandler.Score)
+			}
 		}
 	}
 	r.GET("/api/v1/create-token", employeeHandler.CreateToken)

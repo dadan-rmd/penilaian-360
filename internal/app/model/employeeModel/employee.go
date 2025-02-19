@@ -35,6 +35,11 @@ type (
 		Type         string `form:"type"`
 		Departement  string `form:"departement"`
 	}
+
+	EmployedEmployeeResponse struct {
+		Name        string `json:"name" gorm:"column:Name"`
+		EvaluatedId int64  `form:"evaluated_id"`
+	}
 )
 
 func (entity Employee) ToEmployeeResponse() EmployeeResponse {

@@ -10,4 +10,5 @@ type IEvaluationAnswerRepository interface {
 	FindByID(id int64) (entity *evaluationModel.EvaluationAnswer, err error)
 	Save(tx *gorm.DB, data *[]evaluationModel.EvaluationAnswer) error
 	Delete(evaluationAnswerData evaluationModel.EvaluationAnswer) error
+	FindByEvaluationAndevaluatorID(evaluationId, evaluatorEmployeeId int64) (entity *[]evaluationModel.EvaluationAnswerResponse, err error)
 }

@@ -38,10 +38,23 @@ func (employee EmployeeHandler) CreateToken(c *gin.Context) {
 	var (
 		record = loggers.StartRecord(c.Request)
 	)
-	res, err := employee.EmployeeService.CreateToken(record)
+	res, err := employee.EmployeeService.CreateToken(record, c.Query("email"), c.Query("access_token"))
 	if err != nil {
 		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
 		return
 	}
+	utils.BasicResponse(record, c.Writer, true, http.StatusOK, res, "Success")
+}
+
+func (employee EmployeeHandler) GetUser(c *gin.Context) {
+	var (
+		record = loggers.StartRecord(c.Request)
+	)
+	res, err := employee.AuthMiddleware.GetEmployee(c)
+	if err != nil {
+		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
+		return
+	}
+
 	utils.BasicResponse(record, c.Writer, true, http.StatusOK, res, "Success")
 }

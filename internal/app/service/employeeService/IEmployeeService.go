@@ -7,5 +7,5 @@ import (
 
 type IEmployeeService interface {
 	GetEmployeeAll(record *loggers.Data, params employeeModel.EmployeeParamas) (res []employeeModel.EmployeeResponse, err error)
-	CreateToken(record *loggers.Data) (token string, err error)
+	CreateToken(record *loggers.Data, email, accessToken string) (token string, err error)
 }

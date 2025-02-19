@@ -61,8 +61,8 @@ func (s employeeService) GetEmployeeAll(record *loggers.Data, params employeeMod
 	return
 }
 
-func (s employeeService) CreateToken(record *loggers.Data) (token string, err error) {
-	token, err = jwtHelper.EncodeJWT("dramdani159@gmail.com", "3d8fa1adddc5f2afc0cdd183f6501517")
+func (s employeeService) CreateToken(record *loggers.Data, email, accessToken string) (token string, err error) {
+	token, err = jwtHelper.EncodeJWT(email, accessToken)
 	if err != nil {
 		fmt.Println("Error:", err)
 	} else {

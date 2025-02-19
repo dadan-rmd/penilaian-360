@@ -2,6 +2,7 @@ package mail
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path"
 	"runtime"
@@ -12,7 +13,8 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func SendEvaluation(to []string, cc []string, id, name, deadline string) error {
+func SendEvaluation(to []string, cc []string, evaluatedName, name, deadline string) error {
+	fmt.Println(to, cc, evaluatedName, name, deadline)
 	// Get the root path
 	_, file, _, _ := runtime.Caller(0)
 	rootPath := path.Join(file, "../../../../../")
@@ -26,13 +28,15 @@ func SendEvaluation(to []string, cc []string, id, name, deadline string) error {
 	// Generate email body
 	var body bytes.Buffer
 	err = t.Execute(&body, struct {
-		Name     string
-		Deadline string
-		URL      string
+		EvaluatedName string
+		Name          string
+		Deadline      string
+		URL           string
 	}{
-		Name:     name,
-		Deadline: deadline,
-		URL:      os.Getenv("URL_EVALUATION") + "user-id=" + id,
+		EvaluatedName: evaluatedName,
+		Name:          name,
+		Deadline:      deadline,
+		URL:           os.Getenv("URL_EVALUATION"),
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to execute email template")

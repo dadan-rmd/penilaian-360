@@ -40,7 +40,7 @@ CREATE TABLE `evaluator_employees` (
 CREATE TABLE `evaluation_answers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `evaluation_id` int(11) NOT NULL,
-  `evaluation_employee_id` int(11) NOT NULL,
+  `evaluator_employee_id` int(11) NOT NULL,
   `question_id` int(11) NOT NULL,
   `answer` text DEFAULT NULL,
   `final_point` int(11) NOT NULL,

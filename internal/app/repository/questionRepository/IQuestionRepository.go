@@ -12,4 +12,5 @@ type IQuestionRepository interface {
 	Save(tx *gorm.DB, data *[]questionModel.Question) error
 	Delete(tx *gorm.DB, id []int64) error
 	DeleteEvaluationId(tx *gorm.DB, evaluationId int64) error
+	CountRate(tx *gorm.DB, ids []int64) (count int64, err error)
 }

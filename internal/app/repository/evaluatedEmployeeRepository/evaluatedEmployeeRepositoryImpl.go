@@ -43,12 +43,14 @@ func (d evaluatedEmployeeRepository) FindEmployeeIdByEvaluationId(evaluationId i
 func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Datapaging, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
 	db := d.db.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).
 		Select(`
-			evaluated_employees.id,
+			evaluated_employees.evaluation_id,
+			evaluated_employees.id as evaluated_id,
 			evaluated_employees.evaluation_id,
 			evaluated_employees.total_avg,
 			master_karyawan.Name, 
 			master_karyawan.Department, 
-			master_karyawan.Position
+			master_karyawan.Position,
+			'lihat-penilaian' as status
 		`).
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
 		Order("evaluated_employees.id desc")
@@ -67,4 +69,17 @@ func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 
 	err = db.Scan(&data).Error
 	return
+}
+
+func (d evaluatedEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalAvg float64) (err error) {
+	if tx != nil {
+		return tx.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).
+			Where("id = ?", id).
+			Update("total_avg", totalAvg).Error
+	} else {
+		return d.db.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).
+			Where("id = ?", id).
+			Update("total_avg", totalAvg).Error
+
+	}
 }
