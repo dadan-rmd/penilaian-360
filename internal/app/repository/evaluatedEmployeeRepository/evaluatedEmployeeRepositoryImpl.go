@@ -71,6 +71,36 @@ func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 	return
 }
 
+func (d evaluatedEmployeeRepository) RetrieveNeedsWithPaging(paging datapaging.Datapaging, employeeId int64, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+	db := d.db.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).
+		Select(`
+			evaluated_employees.evaluation_id,
+			evaluated_employees.id as evaluated_id,
+			evaluated_employees.evaluation_id,
+			evaluated_employees.total_avg,
+			master_karyawan.Name, 
+			master_karyawan.Department, 
+			master_karyawan.Position,
+			'beri-penilaian' as status
+		`).
+		Joins("JOIN evaluator_employees on evaluator_employees.evaluated_employee_id = evaluated_employees.id").
+		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
+		Where("evaluator_employees.employee_id = ?", employeeId).
+		Order("evaluated_employees.id desc")
+	if search != "" {
+		db.Where("master_karyawan.Name like '%" + search + "%' or master_karyawan.Position like '%" + search + "%'")
+	}
+	db.Count(&count)
+
+	if paging.Page != 0 {
+		pg := datapaging.New(paging.Limit, paging.Page, []string{})
+		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
+	}
+
+	err = db.Scan(&data).Error
+	return
+}
+
 func (d evaluatedEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalAvg float64) (err error) {
 	if tx != nil {
 		return tx.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).

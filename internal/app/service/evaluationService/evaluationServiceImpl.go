@@ -92,6 +92,16 @@ func (s evaluationService) EvaluationWithDepartementList(record *loggers.Data, p
 	return
 }
 
+func (s evaluationService) EvaluationNeeds(record *loggers.Data, paging datapaging.Datapaging, employee employeeModel.Employee, search string) (res []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+
+	res, count, err = s.evaluatedEmployeeRepo.RetrieveNeedsWithPaging(paging, employee.Id, search)
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, evaluated RetrieveNeedsWithPaging %v", err))
+		return
+	}
+	return
+}
+
 func (s evaluationService) EvaluationDetail(record *loggers.Data, paging datapaging.Datapaging, evaluatedId int64, params evaluatorEmployeesModel.EvaluatorEmployeeParams) (res []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
 
 	res, count, err = s.evaluatorEmployeeRepo.RetrieveEvaluatorDetailWithPaging(paging, evaluatedId, params.Departement, params.Search)

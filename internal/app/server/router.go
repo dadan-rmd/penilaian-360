@@ -77,6 +77,7 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 		evaluationGroup := apiGroup.Group("/evaluation")
 		{
 			evaluationGroup.GET("/list", evaluationHandler.EvaluationList)
+			evaluationGroup.GET("/need", evaluationHandler.EvaluationNeeds)
 			evaluationGroup.GET("/divisi", evaluationHandler.EvaluationDepartementList)
 			evaluationGroup.GET("/:evaluated_id", evaluationHandler.EvaluationDetail)
 			evaluationScoreGroup := evaluationGroup.Group("/score")
