@@ -51,6 +51,7 @@ func (entity Employee) ToEmployeeResponse() EmployeeResponse {
 
 func (v *EmployeeParamas) Validate() error {
 	return validation.ValidateStruct(v,
+		validation.Field(&v.Departement, validation.Required),
 		validation.Field(&v.EvaluationId, validation.Required),
 		validation.Field(&v.Type, validation.Required, validation.In(
 			string(constants.EmployeeTypeEvaluated),
