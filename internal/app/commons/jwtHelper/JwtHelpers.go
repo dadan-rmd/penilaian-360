@@ -65,17 +65,14 @@ func DecodeJWT(tokenString string) (*Claims, error) {
 	})
 
 	if err != nil {
-		fmt.Println("step 1->", err)
 		return nil, ErrInvalidToken
 	}
 
 	if !token.Valid {
-		fmt.Println("step 2->", err)
 		return nil, ErrInvalidToken
 	}
 
 	if claims.ExpiresAt.Time.Before(time.Now()) {
-		fmt.Println("step 3->", err)
 		return nil, ErrTokenExpired
 	}
 

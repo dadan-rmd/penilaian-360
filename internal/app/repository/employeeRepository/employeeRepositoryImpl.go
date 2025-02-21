@@ -15,10 +15,14 @@ func NewEmployeeRepository(db *gorm.DB) IEmployeeRepository {
 	return &employeeRepository{db}
 }
 
-func (d employeeRepository) FindByDepartement(departement string, ids []int64) (entities []employeeModel.Employee, err error) {
+func (d employeeRepository) FindByDepartement(departement string, ids []int64, hasAssigned bool) (entities []employeeModel.Employee, err error) {
 	db := d.db.Model(&employeeModel.Employee{})
 	if len(ids) > 0 {
-		db.Where("id NOT IN ?", ids)
+		if hasAssigned {
+			db.Where("id NOT IN ?", ids)
+		} else {
+			db.Where("id IN ?", ids)
+		}
 	}
 	err = db.Where(employeeModel.Employee{Department: departement}).
 		Find(&entities).Error

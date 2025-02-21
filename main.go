@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"runtime"
@@ -30,7 +29,6 @@ func main() {
 	log.Info().Msg("path env =>" + rootPath + "/params/.env")
 	err := godotenv.Load(rootPath + "/params/.env")
 	if err != nil {
-		fmt.Println("error env->", err)
 		log.Error().Msg("Error loading .env file")
 	}
 

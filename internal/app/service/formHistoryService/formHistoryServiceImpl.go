@@ -202,8 +202,6 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 					err = mail.SendEvaluation([]string{v.Email}, cc, cast.ToString(evaluatedEmployee.Name), v.Name, deadline)
 					if err == nil {
 						employeeID = append(employeeID, v.Id)
-					} else {
-						fmt.Println("error nih bos->", err)
 					}
 				}
 				evaluatedEmployeeID = append(evaluatedEmployeeID, evaluatedEmployee.EvaluatedId)

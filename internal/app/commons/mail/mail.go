@@ -2,7 +2,6 @@ package mail
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path"
 	"runtime"
@@ -14,7 +13,6 @@ import (
 )
 
 func SendEvaluation(to []string, cc []string, evaluatedName, name, deadline string) error {
-	fmt.Println(to, cc, evaluatedName, name, deadline)
 	// Get the root path
 	_, file, _, _ := runtime.Caller(0)
 	rootPath := path.Join(file, "../../../../../")

@@ -52,7 +52,8 @@ func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapag
 	db := d.db.
 		Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
 		Select(`
-			evaluator_employees.id,
+			evaluated_employees.evaluation_id,
+			evaluated_employees.id as evaluated_id,
 			evaluator_employees.employee_id,
 			evaluator_employees.avg,
 			master_karyawan.Name,

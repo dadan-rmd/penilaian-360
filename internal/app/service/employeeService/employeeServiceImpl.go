@@ -50,7 +50,7 @@ func (s employeeService) GetEmployeeAll(record *loggers.Data, params employeeMod
 		err = errors.New("Type not found")
 		return
 	}
-	entities, err := s.employeeRepo.FindByDepartement(params.Departement, ids)
+	entities, err := s.employeeRepo.FindByDepartement(params.Departement, ids, params.HasAssigned)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, FindByDepartement %v", err))
 		return
@@ -63,11 +63,5 @@ func (s employeeService) GetEmployeeAll(record *loggers.Data, params employeeMod
 
 func (s employeeService) CreateToken(record *loggers.Data, email, accessToken string) (token string, err error) {
 	token, err = jwtHelper.EncodeJWT(email, accessToken)
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		fmt.Println("Generated Token:", token)
-	}
-
 	return
 }
