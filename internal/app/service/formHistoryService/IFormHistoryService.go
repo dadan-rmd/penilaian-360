@@ -10,7 +10,7 @@ import (
 
 type IFormHistoryService interface {
 	FormHistoryList(record *loggers.Data, paging datapaging.Datapaging) (res []evaluationModel.FormHistoryList, count int64, err error)
-	FormHistoryView(record *loggers.Data, id int64) (res []questionModel.Question, err error)
+	FormHistoryView(record *loggers.Data, id int64) (res []questionModel.QuestionWithDepartement, err error)
 	SaveFormHistory(record *loggers.Data, request evaluationModel.FormHistoryRequest) (res evaluationModel.FormHistoryResponse, err error)
 	FormHistoryDelete(record *loggers.Data, id int64) (err error)
 	FormHistoryAssignment(record *loggers.Data, request evaluationModel.AssignmentRequest) (err error)

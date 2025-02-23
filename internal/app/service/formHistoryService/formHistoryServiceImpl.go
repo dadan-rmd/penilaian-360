@@ -82,6 +82,7 @@ func (s formHistoryService) SaveFormHistory(record *loggers.Data, request evalua
 	var questions []questionModel.Question
 	for _, v := range request.Question {
 		questions = append(questions, questionModel.Question{
+			Id:           v.Id,
 			EvaluationId: evaluation.Id,
 			Question:     v.Question,
 			Type:         constants.QuestionType(v.Type),
@@ -114,8 +115,8 @@ func (s formHistoryService) FormHistoryList(record *loggers.Data, paging datapag
 	return
 }
 
-func (s formHistoryService) FormHistoryView(record *loggers.Data, id int64) (res []questionModel.Question, err error) {
-	res, err = s.questionRepo.FindByEvaluationId(id)
+func (s formHistoryService) FormHistoryView(record *loggers.Data, id int64) (res []questionModel.QuestionWithDepartement, err error) {
+	res, err = s.questionRepo.FindWithDepartementByEvaluationId(id)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, FindByFormHistoryId %v", err))
 		return
