@@ -31,7 +31,7 @@ type (
 		Name string `json:"name"`
 	}
 	EmployeeParamas struct {
-		FromId      int64  `form:"from_id"`
+		FormId      int64  `form:"form_id"`
 		Type        string `form:"type"`
 		Departement string `form:"departement"`
 		HasAssigned bool   `form:"has_assigned"`
@@ -53,7 +53,7 @@ func (entity Employee) ToEmployeeResponse() EmployeeResponse {
 func (v *EmployeeParamas) Validate() error {
 	return validation.ValidateStruct(v,
 		validation.Field(&v.Departement, validation.Required),
-		validation.Field(&v.FromId, validation.Required),
+		validation.Field(&v.FormId, validation.Required),
 		validation.Field(&v.Type, validation.Required, validation.In(
 			string(constants.EmployeeTypeEvaluated),
 			string(constants.EmployeeTypeEvaluator),
