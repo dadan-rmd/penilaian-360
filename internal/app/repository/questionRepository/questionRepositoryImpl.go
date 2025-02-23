@@ -27,16 +27,6 @@ func (d questionRepository) FindByEvaluationId(evaluationId int64) (entity []que
 	return
 }
 
-func (d questionRepository) FindWithDepartementByEvaluationId(evaluationId int64) (entity []questionModel.QuestionWithDepartement, err error) {
-	err = d.db.Model(&questionModel.Question{}).
-		Select("questions.*,evaluations.departement_id").
-		Joins("JOIN evaluations on evaluations.id = questions.evaluation_id").
-		Where("questions.evaluation_id = ?", evaluationId).
-		Order("questions.id asc").
-		Find(&entity).Error
-	return
-}
-
 func (d questionRepository) Save(tx *gorm.DB, data *[]questionModel.Question) error {
 	if tx != nil {
 		return tx.Save(&data).Error

@@ -55,6 +55,7 @@ func NewFormHistoryService(
 
 func (s formHistoryService) SaveFormHistory(record *loggers.Data, request evaluationModel.FormHistoryRequest) (res evaluationModel.FormHistoryResponse, err error) {
 	evaluation := evaluationModel.Evaluation{
+		Id:            request.Id,
 		DepartementId: request.DepartementId,
 		Title:         request.Title,
 		Status:        constants.EvaluationStatus(request.Status),
@@ -115,11 +116,20 @@ func (s formHistoryService) FormHistoryList(record *loggers.Data, paging datapag
 	return
 }
 
-func (s formHistoryService) FormHistoryView(record *loggers.Data, id int64) (res []questionModel.QuestionWithDepartement, err error) {
-	res, err = s.questionRepo.FindWithDepartementByEvaluationId(id)
+func (s formHistoryService) FormHistoryView(record *loggers.Data, id int64) (res questionModel.QuestionWithEvaluation, err error) {
+	evaluation, err := s.evaluationRepo.FindByID(id)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, FindByFormHistoryId %v", err))
 		return
+	}
+	questions, err := s.questionRepo.FindByEvaluationId(id)
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, FindByFormHistoryId %v", err))
+		return
+	}
+	res = questionModel.QuestionWithEvaluation{
+		Evaluation: *evaluation,
+		Questions:  questions,
 	}
 	return
 }
