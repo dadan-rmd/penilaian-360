@@ -41,11 +41,12 @@ func (s employeeService) GetEmployeeAll(record *loggers.Data, params employeeMod
 			return
 		}
 	} else if params.Type == string(constants.EmployeeTypeEvaluated) {
-		ids, err = s.evaluatedEmployeeRepo.FindEmployeeIdByEvaluationId(params.FormId)
-		if err != nil {
-			loggers.Logf(record, fmt.Sprintf("Err, evaluated FindEmployeeIdByEvaluationId %v", err))
-			return
-		}
+		// ids, err = s.evaluatedEmployeeRepo.FindEmployeeIdByEvaluationId(params.FormId)
+		// if err != nil {
+		// 	loggers.Logf(record, fmt.Sprintf("Err, evaluated FindEmployeeIdByEvaluationId %v", err))
+		// 	return
+		// }
+		ids = []int64{}
 	} else {
 		err = errors.New("Type not found")
 		return
