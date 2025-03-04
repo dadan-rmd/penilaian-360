@@ -27,6 +27,14 @@ func (d questionRepository) FindByEvaluationId(evaluationId int64) (entity []que
 	return
 }
 
+func (d questionRepository) FindByEvaluationIdAndType(evaluationId int64, typeQuestion, competencyType string) (entity []questionModel.Question, err error) {
+	err = d.db.
+		Where("evaluation_id = ? and type=? and competency_type=?", evaluationId, typeQuestion, competencyType).
+		Order("id asc").
+		Find(&entity).Error
+	return
+}
+
 func (d questionRepository) Save(tx *gorm.DB, data *[]questionModel.Question) error {
 	if tx != nil {
 		return tx.Save(&data).Error

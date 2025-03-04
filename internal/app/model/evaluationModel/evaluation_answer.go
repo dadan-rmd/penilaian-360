@@ -20,8 +20,10 @@ type (
 	// DTO
 
 	EvaluationAnswerResponse struct {
-		Type         string `json:"type"`
-		QuestionName string `json:"question_name"`
+		Type           string `json:"type"`
+		CompetencyType string `json:"competency_type"`
+		TitleName      string `json:"title_name"`
+		QuestionName   string `json:"question_name"`
 		EvaluationAnswer
 	}
 

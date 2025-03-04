@@ -33,12 +33,14 @@ type (
 	}
 	DataQuestion struct {
 		Id       int64  `json:"id"`
+		Title    string `json:"title"`
 		Question string `json:"question"`
-		Type     string `json:"type"`
 	}
 	FormHistoryRequest struct {
 		DataFormHistory
-		Question           []DataQuestion `json:"question"`
+		Functional         []DataQuestion `json:"functional"`
+		Personal           []DataQuestion `json:"personal"`
+		Essay              []DataQuestion `json:"essay"`
 		IdToDeleteQuestion []int64        `json:"id_to_delete_question"`
 	}
 	FormHistoryResponse struct {
@@ -69,29 +71,12 @@ func (v *FormHistoryRequest) Validate() error {
 			string(constants.EvaluationStatusDraft),
 			string(constants.EvaluationStatusPublish),
 		)),
-		validation.Field(&v.Question, validation.Required),
 	)
 	if err != nil {
 		return err
 	}
 
-	for _, q := range v.Question {
-		if err := q.Validate(); err != nil {
-			return err
-		}
-	}
-
 	return nil
-}
-
-func (q *DataQuestion) Validate() error {
-	return validation.ValidateStruct(q,
-		validation.Field(&q.Question, validation.Required),
-		validation.Field(&q.Type, validation.Required, validation.In(
-			string(constants.QuestionTypeRate),
-			string(constants.QuestionTypeEssay),
-		)),
-	)
 }
 
 func (e *AssignmentRequest) ToEvaluatedEmployee() (entities []evaluatedEmployeesModel.EvaluatedEmployee) {

@@ -81,12 +81,33 @@ func (s formHistoryService) SaveFormHistory(record *loggers.Data, request evalua
 		return
 	}
 	var questions []questionModel.Question
-	for _, v := range request.Question {
+	for _, v := range request.Functional {
+		questions = append(questions, questionModel.Question{
+			Id:             v.Id,
+			EvaluationId:   evaluation.Id,
+			Title:          v.Title,
+			Question:       v.Question,
+			Type:           constants.QuestionTypeRate,
+			CompetencyType: constants.TypeOfCompetencyFunctional,
+		})
+	}
+	for _, v := range request.Personal {
+		questions = append(questions, questionModel.Question{
+			Id:             v.Id,
+			EvaluationId:   evaluation.Id,
+			Title:          v.Title,
+			Question:       v.Question,
+			Type:           constants.QuestionTypeRate,
+			CompetencyType: constants.TypeOfCompetencyPersonal,
+		})
+	}
+	for _, v := range request.Essay {
 		questions = append(questions, questionModel.Question{
 			Id:           v.Id,
 			EvaluationId: evaluation.Id,
+			Title:        v.Title,
 			Question:     v.Question,
-			Type:         constants.QuestionType(v.Type),
+			Type:         constants.QuestionTypeEssay,
 		})
 	}
 	err = s.questionRepo.Save(tx, &questions)
@@ -122,14 +143,26 @@ func (s formHistoryService) FormHistoryView(record *loggers.Data, id int64) (res
 		loggers.Logf(record, fmt.Sprintf("Err, FindByFormHistoryId %v", err))
 		return
 	}
-	questions, err := s.questionRepo.FindByEvaluationId(id)
+	functional, err := s.questionRepo.FindByEvaluationIdAndType(id, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyFunctional))
 	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, FindByFormHistoryId %v", err))
+		loggers.Logf(record, fmt.Sprintf("Err, FindByEvaluationIdAndType functional %v", err))
+		return
+	}
+	personal, err := s.questionRepo.FindByEvaluationIdAndType(id, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyPersonal))
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, FindByEvaluationIdAndType functional %v", err))
+		return
+	}
+	essay, err := s.questionRepo.FindByEvaluationIdAndType(id, string(constants.QuestionTypeEssay), "")
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, FindByEvaluationIdAndType functional %v", err))
 		return
 	}
 	res = questionModel.QuestionWithEvaluation{
 		Evaluation: *evaluation,
-		Questions:  questions,
+		Functional: questionModel.ToAssemblerQuestion(functional),
+		Personal:   questionModel.ToAssemblerQuestion(personal),
+		Essay:      questionModel.ToAssemblerQuestion(essay),
 	}
 	return
 }

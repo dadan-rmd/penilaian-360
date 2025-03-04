@@ -24,8 +24,10 @@ func (d evaluationAnswerRepository) FindByID(id int64) (entity *evaluationModel.
 func (d evaluationAnswerRepository) FindByEvaluationAndevaluatorID(evaluationId, evaluatorEmployeeId int64) (entity *[]evaluationModel.EvaluationAnswerResponse, err error) {
 	err = d.db.Model(&evaluationModel.EvaluationAnswer{}).
 		Select(`
+			questions.title as title_name,
 			questions.question as question_name,
 			questions.type,
+			questions.competency_type,
 			evaluation_answers.*
 
 		`).

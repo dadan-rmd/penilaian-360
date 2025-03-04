@@ -12,8 +12,10 @@ CREATE TABLE `evaluations` (
 CREATE TABLE `questions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `evaluation_id` int(11) NOT NULL,
+  `title` varchar(225) NULL,
   `question` text NOT NULL,
   `type` varchar(50) NOT NULL,
+  `competency_type` varchar(50) NULL,
   PRIMARY KEY (`id`)
 );
 
