@@ -16,5 +16,5 @@ type IEvaluatorEmployeeRepository interface {
 	RetrieveEvaluatorDetailWithPaging(paging datapaging.Datapaging, evaluatedId int64, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error)
 	FindByID(tx *gorm.DB, id int64) (entity *evaluatorEmployeesModel.EvaluatorEmployee, err error)
 	TotalAvg(tx *gorm.DB, evaluatedEmployeeId int64) (totalAvg float64, err error)
-	UpdateAvg(tx *gorm.DB, id int64, avg float64) (err error)
+	UpdateAvg(tx *gorm.DB, id int64, totalFunctional, totalPersonal, totalAvg float64) (err error)
 }

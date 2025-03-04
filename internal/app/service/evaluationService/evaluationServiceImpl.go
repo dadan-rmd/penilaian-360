@@ -3,6 +3,7 @@ package evaluationService
 import (
 	"fmt"
 	"os"
+	"penilaian-360/internal/app/commons/constants"
 	datapaging "penilaian-360/internal/app/commons/dataPagingHelper"
 	"penilaian-360/internal/app/commons/loggers"
 	"penilaian-360/internal/app/model/employeeModel"
@@ -114,11 +115,9 @@ func (s evaluationService) EvaluationDetail(record *loggers.Data, paging datapag
 
 func (s evaluationService) Score(record *loggers.Data, req evaluationModel.EvaluationAnswerRequests) (err error) {
 	var (
-		idQuestions      []int64
-		totalValue       int64
-		maxValue         int64
-		avg              float64
-		evaluationAnswer []evaluationModel.EvaluationAnswer
+		totalFunctional, totalPersonal, maxFunctional, maxPersonal int64
+		avgFunctional, avgPersonal, sumAvg, avg                    float64
+		evaluationAnswer                                           []evaluationModel.EvaluationAnswer
 	)
 	tx := s.db.Begin()
 	defer func() {
@@ -141,27 +140,47 @@ func (s evaluationService) Score(record *loggers.Data, req evaluationModel.Evalu
 		return
 	}
 	for _, v := range req.Data {
-		idQuestions = append(idQuestions, v.Id)
-		totalValue += int64(v.FinalPoint)
+		if v.Type == string(constants.QuestionTypeRate) && v.CompetencyType == string(constants.TypeOfCompetencyFunctional) {
+			totalFunctional += int64(v.FinalPoint)
+		} else if v.Type == string(constants.QuestionTypeRate) && v.CompetencyType == string(constants.TypeOfCompetencyPersonal) {
+			totalPersonal += int64(v.FinalPoint)
+		}
 	}
-	countRate, err := s.questionRepo.CountRate(tx, idQuestions)
+	countRateFunctional, err := s.questionRepo.CountRateByEvaluationIdAndType(tx, req.Data[0].EvaluationId, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyFunctional))
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, evaluator FindByID %v", err))
 		return
 	}
-	maxValue = 5 * countRate
+	countRatePersonal, err := s.questionRepo.CountRateByEvaluationIdAndType(tx, req.Data[0].EvaluationId, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyPersonal))
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, evaluator FindByID %v", err))
+		return
+	}
+	if countRateFunctional > 0 {
+		maxFunctional = 5 * countRateFunctional
+		avgFunctional = float64(totalFunctional) / float64(maxFunctional) * 100
+	}
+
+	if countRatePersonal > 0 {
+		maxPersonal = 5 * countRatePersonal
+		avgPersonal = float64(totalPersonal) / float64(maxPersonal) * 100
+	}
+	sumAvg = avgFunctional + avgFunctional
+	if sumAvg > 0 {
+		avg = sumAvg / 2
+	}
+	err = s.evaluatorEmployeeRepo.UpdateAvg(tx, req.Data[0].EvaluatorEmployeeId, avgFunctional, avgPersonal, avg)
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, evaluator UpdateAvg %v", err))
+		return
+	}
+
 	evaluatorEmployee, err := s.evaluatorEmployeeRepo.FindByID(tx, req.Data[0].EvaluatorEmployeeId)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, evaluator FindByID %v", err))
 		return
 	}
 
-	avg = float64(totalValue) / float64(maxValue) * 100
-	err = s.evaluatorEmployeeRepo.UpdateAvg(tx, req.Data[0].EvaluatorEmployeeId, avg)
-	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, evaluator UpdateAvg %v", err))
-		return
-	}
 	totalAvg, err := s.evaluatorEmployeeRepo.TotalAvg(tx, evaluatorEmployee.EvaluatedEmployeeId)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, evaluator TotalAvg %v", err))

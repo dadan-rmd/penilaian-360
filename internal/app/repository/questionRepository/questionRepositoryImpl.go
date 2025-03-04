@@ -28,10 +28,14 @@ func (d questionRepository) FindByEvaluationId(evaluationId int64) (entity []que
 }
 
 func (d questionRepository) FindByEvaluationIdAndType(evaluationId int64, typeQuestion, competencyType string) (entity []questionModel.Question, err error) {
-	err = d.db.
-		Where("evaluation_id = ? and type=? and competency_type=?", evaluationId, typeQuestion, competencyType).
-		Order("id asc").
-		Find(&entity).Error
+	db := d.db.Where("evaluation_id = ?", evaluationId)
+	if typeQuestion != "" {
+		db = db.Where("type=? ", typeQuestion)
+	}
+	if competencyType != "" {
+		db = db.Where("competency_type=?", competencyType)
+	}
+	err = db.Order("id asc").Find(&entity).Error
 	return
 }
 
@@ -67,4 +71,22 @@ func (d questionRepository) CountRate(tx *gorm.DB, ids []int64) (count int64, er
 		err = d.db.Model(&questionModel.Question{}).Where("id in (?) and type = 'rate'", ids).Count(&count).Error
 		return
 	}
+}
+
+func (d questionRepository) CountRateByEvaluationIdAndType(tx *gorm.DB, evaluationId int64, typeQuestion, competencyType string) (count int64, err error) {
+	var db *gorm.DB
+	if tx != nil {
+		db = tx.Model(&questionModel.Question{})
+	} else {
+		db = d.db.Model(&questionModel.Question{})
+	}
+	db = db.Where("evaluation_id = ?", evaluationId)
+	if typeQuestion != "" {
+		db = db.Where("type=? ", typeQuestion)
+	}
+	if competencyType != "" {
+		db = db.Where("competency_type=?", competencyType)
+	}
+	err = db.Count(&count).Error
+	return
 }

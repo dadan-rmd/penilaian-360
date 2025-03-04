@@ -14,4 +14,5 @@ type IQuestionRepository interface {
 	Delete(tx *gorm.DB, id []int64) error
 	DeleteEvaluationId(tx *gorm.DB, evaluationId int64) error
 	CountRate(tx *gorm.DB, ids []int64) (count int64, err error)
+	CountRateByEvaluationIdAndType(tx *gorm.DB, evaluationId int64, typeQuestion, competencyType string) (count int64, err error)
 }

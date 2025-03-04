@@ -32,7 +32,11 @@ CREATE TABLE `evaluator_employees` (
   `evaluation_id` int(11) NOT NULL,
   `evaluated_employee_id` int(11) NOT NULL,
   `employee_id` int(11) NOT NULL,
-  `avg` float DEFAULT NULL,
+  `total_functional` float DEFAULT 0,
+  `total_personal` float DEFAULT 0,
+  `total_avg` float DEFAULT 0,
+  `has_assessed` boolean DEFAULT false,
+  `requires_assessment` boolean DEFAULT false,
   `email_sent` varchar(50) DEFAULT NULL,
   `cc` varchar(225) DEFAULT NULL,
   PRIMARY KEY (`id`)

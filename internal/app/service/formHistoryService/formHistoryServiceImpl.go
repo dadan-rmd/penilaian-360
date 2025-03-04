@@ -208,6 +208,7 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		evaluatedEmployeeID []int64
 		evaluationAnswer    []evaluationModel.EvaluationAnswer
 		evaluators          []evaluatorEmployeesModel.EvaluatorEmployee
+		requiresAssessment  bool
 	)
 	entity, err := s.evaluationRepo.FindByID(request.Id)
 	if err != nil {
@@ -263,8 +264,16 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		return
 	}
 
+	countRate, err := s.questionRepo.CountRateByEvaluationIdAndType(tx, request.Id, string(constants.QuestionTypeRate), "")
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, CountRateByEvaluationIdAndType Functional %v", err))
+		return
+	}
+	if countRate > 0 {
+		requiresAssessment = true
+	}
 	for _, v := range evaluateds {
-		evaluators = append(evaluators, request.ToEvaluatorEmployee(v.Id)...)
+		evaluators = append(evaluators, request.ToEvaluatorEmployee(v.Id, requiresAssessment)...)
 	}
 	err = s.evaluatorEmployeeRepo.Save(tx, &evaluators)
 	if err != nil {

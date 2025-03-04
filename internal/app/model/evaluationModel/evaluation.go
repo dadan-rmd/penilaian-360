@@ -89,13 +89,14 @@ func (e *AssignmentRequest) ToEvaluatedEmployee() (entities []evaluatedEmployees
 	return
 }
 
-func (e *AssignmentRequest) ToEvaluatorEmployee(evaluatedEmployeeId int64) (entities []evaluatorEmployeesModel.EvaluatorEmployee) {
+func (e *AssignmentRequest) ToEvaluatorEmployee(evaluatedEmployeeId int64, requiresAssessment bool) (entities []evaluatorEmployeesModel.EvaluatorEmployee) {
 	for _, v := range e.EvaluatorId {
 		entities = append(entities, evaluatorEmployeesModel.EvaluatorEmployee{
 			EvaluationId:        e.Id,
 			EvaluatedEmployeeId: evaluatedEmployeeId,
 			EmployeeId:          v,
 			Cc:                  e.Cc,
+			RequiresAssessment:  requiresAssessment,
 		})
 	}
 	return

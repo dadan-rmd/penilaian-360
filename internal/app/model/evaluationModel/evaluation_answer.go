@@ -28,7 +28,8 @@ type (
 	}
 
 	EvaluationAnswerRequest struct {
-		Type string `json:"type"`
+		Type           string `json:"type"`
+		CompetencyType string `json:"competency_type"`
 		EvaluationAnswer
 	}
 
