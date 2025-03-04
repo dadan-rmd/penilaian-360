@@ -19,9 +19,9 @@ func (d employeeRepository) FindByDepartement(departement string, ids []int64, h
 	db := d.db.Model(&employeeModel.Employee{})
 	if len(ids) > 0 {
 		if hasAssigned {
-			db.Where("id NOT IN ?", ids)
-		} else {
 			db.Where("id IN ?", ids)
+		} else {
+			db.Where("id NOT IN ?", ids)
 		}
 	}
 	err = db.Where(employeeModel.Employee{Department: departement}).
