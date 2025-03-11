@@ -41,3 +41,13 @@ func ToAssemblerQuestion(questions []Question) (entities []DataQuestion) {
 	}
 	return
 }
+
+func ToAssemblerQuestionV2(questions []Question) (entities []evaluationModel.DataQuestion) {
+	for _, v := range questions {
+		entities = append(entities, evaluationModel.DataQuestion{
+			Title:    v.Title,
+			Question: v.Question,
+		})
+	}
+	return
+}

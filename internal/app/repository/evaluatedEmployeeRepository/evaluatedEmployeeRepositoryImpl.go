@@ -50,7 +50,7 @@ func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 			master_karyawan.Name, 
 			master_karyawan.Department, 
 			master_karyawan.Position,
-			'lihat-penilaian' as status
+			'lihat-penilaian' as action
 		`).
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
 		Order("evaluated_employees.id desc")
@@ -81,7 +81,7 @@ func (d evaluatedEmployeeRepository) RetrieveNeedsWithPaging(paging datapaging.D
 			master_karyawan.Name, 
 			master_karyawan.Department, 
 			master_karyawan.Position,
-			'beri-penilaian' as status
+			'beri-penilaian' as action
 		`).
 		Joins("JOIN evaluator_employees on evaluator_employees.evaluated_employee_id = evaluated_employees.id").
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").

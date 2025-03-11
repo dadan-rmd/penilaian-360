@@ -15,4 +15,5 @@ type IEvaluationService interface {
 	EvaluationDetail(record *loggers.Data, paging datapaging.Datapaging, evaluatedId int64, params evaluatorEmployeesModel.EvaluatorEmployeeParams) (res []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error)
 	ScoreDetail(record *loggers.Data, evaluationId, evaluatorEmployeeId int64) (res *[]evaluationModel.EvaluationAnswerResponse, err error)
 	Score(record *loggers.Data, req evaluationModel.EvaluationAnswerRequests) (err error)
+	EvaluationApprove(record *loggers.Data, evaluatorId int64) (err error)
 }

@@ -15,4 +15,5 @@ type IFormHistoryService interface {
 	FormHistoryDelete(record *loggers.Data, id int64) (err error)
 	FormHistoryAssignment(record *loggers.Data, request evaluationModel.AssignmentRequest) (err error)
 	FormHistoryDetail(record *loggers.Data, paging datapaging.Datapaging, params evaluatorEmployeesModel.FormHistoryDetailParams) (res evaluatorEmployeesModel.FormHistoryDetailResponse, count int64, err error)
+	CopyFormHistory(record *loggers.Data, id int64) (res evaluationModel.FormHistoryResponse, err error)
 }

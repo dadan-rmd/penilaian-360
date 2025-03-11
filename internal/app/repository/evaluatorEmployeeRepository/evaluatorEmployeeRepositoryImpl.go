@@ -60,13 +60,14 @@ func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapag
 			evaluator_employees.total_avg,
 			evaluator_employees.has_assessed,
 			evaluator_employees.requires_assessment,
+			evaluator_employees.status,
 			master_karyawan.Name,
 			master_karyawan.Department,
 			master_karyawan.Position,
 			CASE 
 				WHEN evaluator_employees.total_avg > 0 THEN 'Sudah Menilai' 
 				ELSE 'Belum Menilai' 
-			END AS status
+			END AS action
 		`).
 		Joins("JOIN master_karyawan ON master_karyawan.id = evaluator_employees.employee_id").
 		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
@@ -118,7 +119,7 @@ func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 				CASE 
 					WHEN evaluator_employees.cc = "` + email + `" THEN 'lihat-penilaian' 
 					ELSE NULL 
-				END AS status
+				END AS action
 			`)
 		} else {
 			db.Select(slqSelect)
@@ -156,10 +157,11 @@ func (d evaluatorEmployeeRepository) RetrieveEvaluatorDetailWithPaging(paging da
 			evaluator_employees.total_avg,
 			evaluator_employees.has_assessed,
 			evaluator_employees.requires_assessment,
+			evaluator_employees.status,
 			master_karyawan.Name, 
 			master_karyawan.Department, 
 			master_karyawan.Position,
-			'baca-penilaian' as status
+			'baca-penilaian' as action
 		`).
 		Where("evaluator_employees.evaluated_employee_id = ?", evaluatedId).
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluator_employees.employee_id").
@@ -210,4 +212,10 @@ func (d evaluatorEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalFunct
 			TotalAvg:        totalAvg,
 		}).Error
 	return
+}
+
+func (d evaluatorEmployeeRepository) ApproveStatusByEvaluatedEmployeeIdAndEmployeeId(id int64) error {
+	return d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
+		Where("id = ?", id).
+		Update("status", "approve").Error
 }

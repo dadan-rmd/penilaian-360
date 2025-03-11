@@ -163,3 +163,16 @@ func (evaluation EvaluationHandler) Score(c *gin.Context) {
 	}
 	utils.BasicResponse(record, c.Writer, true, http.StatusOK, nil, "Success")
 }
+
+func (evaluation EvaluationHandler) Approve(c *gin.Context) {
+	var (
+		record = loggers.StartRecord(c.Request)
+	)
+
+	err := evaluation.EvaluationService.EvaluationApprove(record, cast.ToInt64(c.Param("evaluator_id")))
+	if err != nil {
+		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
+		return
+	}
+	utils.BasicResponse(record, c.Writer, true, http.StatusOK, nil, "Success")
+}

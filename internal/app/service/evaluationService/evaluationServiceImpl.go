@@ -52,8 +52,11 @@ func NewEvaluationService(
 }
 
 func (s evaluationService) EvaluationList(record *loggers.Data, paging datapaging.Datapaging, employee employeeModel.Employee, params evaluatorEmployeesModel.EvaluatorEmployeeParams) (res []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
-	accessRoleDepartement := strings.Split(os.Getenv("ACCESS_ROLE_DEPARTEMENT"), ",")
-	if slices.Contains(accessRoleDepartement, employee.Department) {
+	var (
+		accessRoleDepartement = strings.Split(os.Getenv("ACCESS_ROLE_DEPARTEMENT"), ",")
+		whitelistUser         = strings.Split(os.Getenv("WHITELIST_USER"), ",")
+	)
+	if slices.Contains(accessRoleDepartement, employee.Department) || slices.Contains(whitelistUser, employee.Email) {
 		res, count, err = s.evaluatedEmployeeRepo.RetrieveListWithPaging(paging, params.Departement, params.Search)
 		if err != nil {
 			loggers.Logf(record, fmt.Sprintf("Err, evaluated RetrieveListWithPaging %v", err))
@@ -66,10 +69,10 @@ func (s evaluationService) EvaluationList(record *loggers.Data, paging datapagin
 			return
 		}
 		for i := 0; i < len(res); i++ {
-			if res[i].Status != "" {
-				res[i].Status = res[i].Status + ",beri-penilaian"
+			if res[i].Action != "" {
+				res[i].Action = res[i].Action + ",beri-penilaian"
 			} else {
-				res[i].Status = "beri-penilaian"
+				res[i].Action = "beri-penilaian"
 			}
 		}
 	}
@@ -84,10 +87,10 @@ func (s evaluationService) EvaluationWithDepartementList(record *loggers.Data, p
 		return
 	}
 	for i := 0; i < len(res); i++ {
-		if res[i].Status != "" {
-			res[i].Status = res[i].Status + ",beri-penilaian"
+		if res[i].Action != "" {
+			res[i].Action = res[i].Action + ",beri-penilaian"
 		} else {
-			res[i].Status = "beri-penilaian"
+			res[i].Action = "beri-penilaian"
 		}
 	}
 	return
@@ -199,6 +202,16 @@ func (s evaluationService) ScoreDetail(record *loggers.Data, evaluationId, evalu
 	res, err = s.evaluationAnswerRepo.FindByEvaluationAndevaluatorID(evaluationId, evaluatorEmployeeId)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, FindByEvaluationAndevaluatorID %v", err))
+		return
+	}
+	return
+}
+
+func (s evaluationService) EvaluationApprove(record *loggers.Data, evaluatorId int64) (err error) {
+
+	err = s.evaluatorEmployeeRepo.ApproveStatusByEvaluatedEmployeeIdAndEmployeeId(evaluatorId)
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, ApproveStatusByEvaluatedEmployeeIdAndEmployeeId %v", err))
 		return
 	}
 	return

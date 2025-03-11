@@ -124,3 +124,15 @@ func (evaluation FormHistoryHandler) FormHistoryDetail(c *gin.Context) {
 	}
 	utils.BasicResponse(record, c.Writer, true, http.StatusOK, data, "Success")
 }
+
+func (evaluation FormHistoryHandler) FormHistoryCopy(c *gin.Context) {
+	var (
+		record = loggers.StartRecord(c.Request)
+	)
+	res, err := evaluation.FormHistoryService.CopyFormHistory(record, cast.ToInt64(c.Param("id")))
+	if err != nil {
+		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
+		return
+	}
+	utils.BasicResponse(record, c.Writer, true, http.StatusOK, res, "Success")
+}

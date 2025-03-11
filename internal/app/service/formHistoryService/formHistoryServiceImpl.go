@@ -321,3 +321,40 @@ func (s formHistoryService) FormHistoryDetail(record *loggers.Data, paging datap
 	}
 	return
 }
+
+func (s formHistoryService) CopyFormHistory(record *loggers.Data, id int64) (res evaluationModel.FormHistoryResponse, err error) {
+
+	evaluation, err := s.evaluationRepo.FindByID(id)
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, evaluation FindByID %v", err))
+		return
+	}
+	functional, err := s.questionRepo.FindByEvaluationIdAndType(id, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyFunctional))
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, FindByEvaluationIdAndType functional %v", err))
+		return
+	}
+	personal, err := s.questionRepo.FindByEvaluationIdAndType(id, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyPersonal))
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, FindByEvaluationIdAndType functional %v", err))
+		return
+	}
+	essay, err := s.questionRepo.FindByEvaluationIdAndType(id, string(constants.QuestionTypeEssay), "")
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, FindByEvaluationIdAndType functional %v", err))
+		return
+	}
+	request := evaluationModel.FormHistoryRequest{
+		DataFormHistory: evaluationModel.DataFormHistory{
+			DepartementId: evaluation.DepartementId,
+			Title:         evaluation.Title,
+			Status:        string(constants.EvaluationStatusDraft),
+			DeadlineAt:    evaluation.DeadlineAt,
+		},
+		Functional: questionModel.ToAssemblerQuestionV2(functional),
+		Personal:   questionModel.ToAssemblerQuestionV2(personal),
+		Essay:      questionModel.ToAssemblerQuestionV2(essay),
+	}
+	res, err = s.SaveFormHistory(record, request)
+	return
+}

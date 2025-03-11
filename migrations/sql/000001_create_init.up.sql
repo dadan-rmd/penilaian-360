@@ -39,6 +39,7 @@ CREATE TABLE `evaluator_employees` (
   `requires_assessment` boolean DEFAULT false,
   `email_sent` varchar(50) DEFAULT NULL,
   `cc` varchar(225) DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'pending',
   PRIMARY KEY (`id`)
 );
 

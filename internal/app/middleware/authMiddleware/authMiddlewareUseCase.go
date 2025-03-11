@@ -2,10 +2,12 @@ package authMiddleware
 
 import (
 	"errors"
+	"os"
 	"penilaian-360/internal/app/commons/jsonHttpResponse"
 	"penilaian-360/internal/app/commons/jwtHelper"
 	"penilaian-360/internal/app/model/employeeModel"
 	"penilaian-360/internal/app/repository/employeeRepository"
+	"slices"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -97,6 +99,15 @@ func (auth *authMiddleware) GetEmployee(c *gin.Context) (entity employeeModel.Em
 	if !ok {
 		err = ErrInvalidToken
 		return
+	}
+	entity.Role = entity.Position
+	whitelistUser := strings.Split(os.Getenv("WHITELIST_USER"), ",")
+	accessRoleDepartement := strings.Split(os.Getenv("ACCESS_ROLE_DEPARTEMENT"), ",")
+	entity.Role = "employee"
+	if slices.Contains(accessRoleDepartement, entity.Department) {
+		entity.Role = "hr"
+	} else if slices.Contains(whitelistUser, entity.Email) {
+		entity.Role = "head"
 	}
 	return
 }

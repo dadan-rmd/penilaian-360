@@ -18,6 +18,7 @@ type Employee struct {
 	Position    string `json:"position" gorm:"column:Position"`
 	Email       string `json:"email" gorm:"column:Email"`
 	AccessToken string `json:"access_token" gorm:"column:AccessToken"`
+	Role        string `json:"role" gorm:"-"`
 }
 
 func (Employee) TableName() string {

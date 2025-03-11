@@ -73,6 +73,7 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 			formHistoryGroup.DELETE("/:id", formHistoryHandler.FormHistoryDelete)
 			formHistoryGroup.POST("/assignment", formHistoryHandler.FormHistoryAssignment)
 			formHistoryGroup.GET("/detail", formHistoryHandler.FormHistoryDetail)
+			formHistoryGroup.GET("/copy/:id", formHistoryHandler.FormHistoryCopy)
 		}
 		evaluationGroup := apiGroup.Group("/evaluation")
 		{
@@ -80,6 +81,7 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 			evaluationGroup.GET("/need", evaluationHandler.EvaluationNeeds)
 			evaluationGroup.GET("/divisi", evaluationHandler.EvaluationDepartementList)
 			evaluationGroup.GET("/:evaluated_id", evaluationHandler.EvaluationDetail)
+			evaluationGroup.GET("approve/:evaluator_id", evaluationHandler.Approve)
 			evaluationScoreGroup := evaluationGroup.Group("/score")
 			{
 				evaluationScoreGroup.GET("/detail", evaluationHandler.ScoreDetail)

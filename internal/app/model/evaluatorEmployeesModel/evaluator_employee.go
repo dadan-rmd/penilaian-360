@@ -13,6 +13,7 @@ type (
 		RequiresAssessment  bool    `json:"requires_assessment"`
 		EmailSent           string  `json:"email_sent"`
 		Cc                  string  `json:"cc"`
+		Status              string  `json:"status"`
 	}
 
 	// DTO
@@ -29,6 +30,7 @@ type (
 		HasAssessed        bool    `json:"has_assessed"`
 		RequiresAssessment bool    `json:"requires_assessment"`
 		Status             string  `json:"status"`
+		Action             string  `json:"action"`
 	}
 	EvaluatorEmployeeParams struct {
 		Departement string
