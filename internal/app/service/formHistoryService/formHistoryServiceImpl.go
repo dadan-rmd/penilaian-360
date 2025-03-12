@@ -258,12 +258,12 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		}()
 	}()
 	evaluateds := request.ToEvaluatedEmployee()
-	for _, v := range evaluateds {
-
+	for i, v := range evaluateds {
 		entity, errEntity := s.evaluatedEmployeeRepo.FindByEvaluationIdAndEmployeeId(v.EvaluationId, v.EmployeeId)
 		if errEntity != nil {
 			loggers.Logf(record, fmt.Sprintf("Err, evaluated FindByEvaluationIdAndEmployeeId Save %v", err))
 		}
+		evaluateds[i].Id = entity.Id
 		if entity == nil {
 			err = s.evaluatedEmployeeRepo.Save(tx, &evaluateds)
 			if err != nil {
