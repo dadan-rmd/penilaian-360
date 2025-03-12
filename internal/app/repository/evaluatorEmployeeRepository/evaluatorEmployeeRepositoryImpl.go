@@ -54,6 +54,7 @@ func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapag
 		Select(`
 			evaluated_employees.evaluation_id,
 			evaluated_employees.id as evaluated_id,
+			evaluator_employees.id as evaluator_id,
 			evaluator_employees.employee_id,
 			evaluator_employees.total_functional,
 			evaluator_employees.total_personal,
@@ -103,8 +104,13 @@ func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 				evaluated_employees.evaluation_id,
 				evaluated_employees.id as evaluated_id,
 				evaluator_employees.id as evaluator_id,
+				evaluator_employees.total_functional,
+				evaluator_employees.total_personal,
 				evaluated_employees.evaluation_id,
 				evaluated_employees.total_avg,
+				evaluator_employees.has_assessed,
+				evaluator_employees.requires_assessment,
+				evaluator_employees.status,
 				master_karyawan.Name, 
 				master_karyawan.Department, 
 				master_karyawan.Position`
@@ -192,7 +198,7 @@ func (d evaluatorEmployeeRepository) TotalAvg(tx *gorm.DB, evaluatedEmployeeId i
 	} else {
 		db = d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{})
 	}
-	err = db.Select("SUM(total_avg)/count(evaluation_id) as total_avg").
+	err = db.Select("IFNULL(SUM(total_avg) / COUNT(evaluation_id), 0) AS total_avg ").
 		Where("evaluated_employee_id = ? and requires_assessment = ?", evaluatedEmployeeId, true).
 		Pluck("total_avg", &totalAvg).Error
 	return
@@ -210,6 +216,8 @@ func (d evaluatorEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalFunct
 			TotalFunctional: totalFunctional,
 			TotalPersonal:   totalPersonal,
 			TotalAvg:        totalAvg,
+			HasAssessed:     true,
+			Status:          "pending",
 		}).Error
 	return
 }

@@ -40,20 +40,43 @@ func (d evaluatedEmployeeRepository) FindEmployeeIdByEvaluationId(evaluationId i
 	return
 }
 
+func (d evaluatedEmployeeRepository) FindByEvaluationIdAndEmployeeId(evaluationId, employeeId int64) (entity *evaluatedEmployeesModel.EvaluatedEmployee, err error) {
+	err = d.db.Where(evaluatedEmployeesModel.EvaluatedEmployee{
+		EvaluationId: evaluationId,
+		EmployeeId:   employeeId,
+	}).
+		Find(&entity).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return
+	}
+	return
+}
+
 func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Datapaging, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
 	db := d.db.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).
 		Select(`
 			evaluated_employees.evaluation_id,
 			evaluated_employees.id as evaluated_id,
+			evaluator_employees.id as evaluator_id,
 			evaluated_employees.evaluation_id,
+			evaluator_employees.total_functional,
+			evaluator_employees.total_personal,
 			evaluated_employees.total_avg,
+			evaluator_employees.has_assessed,
+			evaluator_employees.requires_assessment,
+			evaluator_employees.status,
 			master_karyawan.Name, 
 			master_karyawan.Department, 
 			master_karyawan.Position,
 			'lihat-penilaian' as action
 		`).
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
-		Order("evaluated_employees.id desc")
+		Joins("JOIN evaluator_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
+		Order("evaluated_employees.id desc").
+		Group("evaluated_employees.evaluation_id,evaluated_employees.id")
 	if departement != "" {
 		db.Where("master_karyawan.Department = ?", departement)
 	}

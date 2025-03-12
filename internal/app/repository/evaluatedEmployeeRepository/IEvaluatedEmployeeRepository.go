@@ -11,6 +11,7 @@ import (
 type IEvaluatedEmployeeRepository interface {
 	Save(tx *gorm.DB, data *[]evaluatedEmployeesModel.EvaluatedEmployee) error
 	FindEmployeeIdByEvaluationId(evaluationId int64) (employeeId []int64, err error)
+	FindByEvaluationIdAndEmployeeId(evaluationId, employeeId int64) (entity *evaluatedEmployeesModel.EvaluatedEmployee, err error)
 	RetrieveListWithPaging(paging datapaging.Datapaging, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error)
 	RetrieveNeedsWithPaging(paging datapaging.Datapaging, employeeId int64, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error)
 	UpdateAvg(tx *gorm.DB, id int64, totalAvg float64) (err error)

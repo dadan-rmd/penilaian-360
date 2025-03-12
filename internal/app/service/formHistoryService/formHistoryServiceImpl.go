@@ -258,10 +258,19 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		}()
 	}()
 	evaluateds := request.ToEvaluatedEmployee()
-	err = s.evaluatedEmployeeRepo.Save(tx, &evaluateds)
-	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, evaluated employee Save %v", err))
-		return
+	for _, v := range evaluateds {
+
+		entity, errEntity := s.evaluatedEmployeeRepo.FindByEvaluationIdAndEmployeeId(v.EvaluationId, v.EmployeeId)
+		if errEntity != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, evaluated FindByEvaluationIdAndEmployeeId Save %v", err))
+		}
+		if entity == nil {
+			err = s.evaluatedEmployeeRepo.Save(tx, &evaluateds)
+			if err != nil {
+				loggers.Logf(record, fmt.Sprintf("Err, evaluated employee Save %v", err))
+				return
+			}
+		}
 	}
 
 	countRate, err := s.questionRepo.CountRateByEvaluationIdAndType(tx, request.Id, string(constants.QuestionTypeRate), "")
