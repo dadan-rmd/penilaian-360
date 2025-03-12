@@ -264,7 +264,8 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 			loggers.Logf(record, fmt.Sprintf("Err, evaluated FindByEvaluationIdAndEmployeeId Save %v", err))
 		}
 		evaluateds[i].Id = entity.Id
-		if entity == nil {
+		if entity.Id == 0 {
+			fmt.Println("masuk if")
 			err = s.evaluatedEmployeeRepo.Save(tx, &evaluateds)
 			if err != nil {
 				loggers.Logf(record, fmt.Sprintf("Err, evaluated employee Save %v", err))
