@@ -97,6 +97,7 @@ func (e *AssignmentRequest) ToEvaluatorEmployee(evaluatedEmployeeId int64, requi
 			EmployeeId:          v,
 			Cc:                  e.Cc,
 			RequiresAssessment:  requiresAssessment,
+			Status:              "pending",
 		})
 	}
 	return
