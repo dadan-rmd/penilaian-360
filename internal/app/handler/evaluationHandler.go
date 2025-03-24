@@ -112,7 +112,7 @@ func (evaluation EvaluationHandler) EvaluationDetail(c *gin.Context) {
 		Limit: cast.ToInt(c.Query("page_size")),
 	}
 
-	res, count, err := evaluation.EvaluationService.EvaluationDetail(record, paging, cast.ToInt64(c.Param("evaluated_id")), evaluatorEmployeesModel.EvaluatorEmployeeParams{
+	res, count, err := evaluation.EvaluationService.EvaluationDetail(record, paging, cast.ToInt64(c.Param("employee_id")), evaluatorEmployeesModel.EvaluatorEmployeeParams{
 		Departement: c.Query("departement"),
 		Search:      c.Query("search"),
 	})

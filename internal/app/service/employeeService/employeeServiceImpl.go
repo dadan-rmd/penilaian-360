@@ -35,7 +35,7 @@ func (s employeeService) GetEmployeeAll(record *loggers.Data, params employeeMod
 		params.Departement = ""
 	}
 	if params.Type == string(constants.EmployeeTypeEvaluator) {
-		ids, err = s.evaluatorEmployeeRepo.FindEmployeeIdByEvaluationId(params.FormId)
+		ids, err = s.evaluatorEmployeeRepo.FindEmployeeIdByEvaluationId(params.FormId, params.EmployeeId)
 		if err != nil {
 			loggers.Logf(record, fmt.Sprintf("Err, evaluator FindEmployeeIdByEvaluationId %v", err))
 			return

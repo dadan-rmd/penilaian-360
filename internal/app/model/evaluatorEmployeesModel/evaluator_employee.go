@@ -21,6 +21,7 @@ type (
 		EvaluationId       int64   `json:"evaluation_id"`
 		EvaluatedId        int64   `json:"evaluated_id"`
 		EvaluatorId        int64   `json:"evaluator_id"`
+		EmployeeId         int64   `json:"employee_id"`
 		EmployeeName       string  `json:"employee_name" gorm:"column:Name"`
 		Department         string  `json:"department" gorm:"column:Department"`
 		Position           string  `json:"position" gorm:"column:Position"`

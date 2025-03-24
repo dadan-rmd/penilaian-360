@@ -62,6 +62,7 @@ func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 			evaluated_employees.id as evaluated_id,
 			evaluator_employees.id as evaluator_id,
 			evaluated_employees.evaluation_id,
+			evaluated_employees.employee_id,
 			evaluator_employees.total_functional,
 			evaluator_employees.total_personal,
 			evaluated_employees.total_avg,
@@ -76,7 +77,7 @@ func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
 		Joins("JOIN evaluator_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
 		Order("evaluated_employees.id desc").
-		Group("evaluated_employees.evaluation_id,evaluated_employees.id")
+		Group("evaluated_employees.employee_id")
 	if departement != "" {
 		db.Where("master_karyawan.Department = ?", departement)
 	}
@@ -101,6 +102,7 @@ func (d evaluatedEmployeeRepository) RetrieveNeedsWithPaging(paging datapaging.D
 			evaluated_employees.id as evaluated_id,
 			evaluator_employees.id as evaluator_id,
 			evaluated_employees.evaluation_id,
+			evaluated_employees.employee_id,
 			evaluator_employees.total_functional,
 			evaluator_employees.total_personal,
 			evaluated_employees.total_avg,

@@ -106,9 +106,9 @@ func (s evaluationService) EvaluationNeeds(record *loggers.Data, paging datapagi
 	return
 }
 
-func (s evaluationService) EvaluationDetail(record *loggers.Data, paging datapaging.Datapaging, evaluatedId int64, params evaluatorEmployeesModel.EvaluatorEmployeeParams) (res []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+func (s evaluationService) EvaluationDetail(record *loggers.Data, paging datapaging.Datapaging, employeeId int64, params evaluatorEmployeesModel.EvaluatorEmployeeParams) (res []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
 
-	res, count, err = s.evaluatorEmployeeRepo.RetrieveEvaluatorDetailWithPaging(paging, evaluatedId, params.Departement, params.Search)
+	res, count, err = s.evaluatorEmployeeRepo.RetrieveEvaluatorDetailWithPaging(paging, employeeId, params.Departement, params.Search)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, evaluator RetrieveEvaluatorDetailWithPaging %v", err))
 		return

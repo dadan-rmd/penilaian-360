@@ -26,13 +26,16 @@ func (d evaluatorEmployeeRepository) FindByID(tx *gorm.DB, id int64) (entity *ev
 	}
 }
 
-func (d evaluatorEmployeeRepository) FindEmployeeIdByEvaluationId(evaluationId int64) (employeeId []int64, err error) {
-	err = d.db.
+func (d evaluatorEmployeeRepository) FindEmployeeIdByEvaluationId(evaluationId, paramEmployeeId int64) (employeeId []int64, err error) {
+	db := d.db.
 		Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
 		Where(evaluatorEmployeesModel.EvaluatorEmployee{
 			EvaluationId: evaluationId,
-		}).
-		Pluck("employee_id", &employeeId).Error
+		})
+	if paramEmployeeId != 0 {
+		db = db.Where("employee_id != ?", employeeId)
+	}
+	err = db.Pluck("employee_id", &employeeId).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return []int64{}, nil
@@ -104,6 +107,7 @@ func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 				evaluated_employees.evaluation_id,
 				evaluated_employees.id as evaluated_id,
 				evaluator_employees.id as evaluator_id,
+				evaluated_employees.employee_id,
 				evaluator_employees.total_functional,
 				evaluator_employees.total_personal,
 				evaluated_employees.evaluation_id,
@@ -151,13 +155,14 @@ func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 	return
 }
 
-func (d evaluatorEmployeeRepository) RetrieveEvaluatorDetailWithPaging(paging datapaging.Datapaging, evaluatedId int64, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+func (d evaluatorEmployeeRepository) RetrieveEvaluatorDetailWithPaging(paging datapaging.Datapaging, employeeId int64, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
 	db := d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
 		Select(`
 			evaluated_employees.evaluation_id,
 			evaluated_employees.id as evaluated_id,
 			evaluator_employees.id as evaluator_id,
 			evaluator_employees.evaluation_id,
+			evaluator_employees.employee_id,
 			evaluator_employees.total_functional,
 			evaluator_employees.total_personal,
 			evaluator_employees.total_avg,
@@ -169,8 +174,8 @@ func (d evaluatorEmployeeRepository) RetrieveEvaluatorDetailWithPaging(paging da
 			master_karyawan.Position,
 			'baca-penilaian' as action
 		`).
-		Where("evaluator_employees.evaluated_employee_id = ?", evaluatedId).
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluator_employees.employee_id").
+		Where("evaluated_employees.employee_id = ?", employeeId).
 		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
 		Order("evaluator_employees.id desc")
 	if departement != "" {

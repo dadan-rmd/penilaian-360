@@ -36,6 +36,7 @@ type (
 		Type        string `form:"type"`
 		Departement string `form:"departement"`
 		HasAssigned bool   `form:"has_assigned"`
+		EmployeeId  int64  `form:"employee_id"`
 	}
 
 	EmployedEmployeeResponse struct {
