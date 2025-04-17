@@ -204,7 +204,7 @@ func (d evaluatorEmployeeRepository) TotalAvg(tx *gorm.DB, evaluatedEmployeeId i
 		db = d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{})
 	}
 	err = db.Select("IFNULL(SUM(evaluator_employees.total_avg) / COUNT(evaluator_employees.evaluation_id), 0) AS total_avg ").
-		Joins("JOIN evaluated_employees ON evaluated_employees evaluated_employees.id =evaluator_employees.evaluated_employee_id").
+		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
 		Where("evaluated_employees.employee_id <> evaluator_employees.employee_id and evaluator_employees.evaluated_employee_id = ? and evaluator_employees.requires_assessment = ?", evaluatedEmployeeId, true).
 		Pluck("total_avg", &totalAvg).Error
 	return
