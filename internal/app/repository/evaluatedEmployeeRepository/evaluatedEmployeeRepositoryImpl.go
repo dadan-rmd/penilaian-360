@@ -56,73 +56,108 @@ func (d evaluatedEmployeeRepository) FindByEvaluationIdAndEmployeeId(evaluationI
 }
 
 func (d evaluatedEmployeeRepository) RetrieveListWithPaging(paging datapaging.Datapaging, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+	slqSelect := `
+		evaluated_employees.evaluation_id,
+		evaluated_employees.id as evaluated_id,
+		evaluator_employees.id as evaluator_id,
+		evaluated_employees.evaluation_id,
+		evaluated_employees.employee_id,
+		evaluator_employees.total_functional,
+		evaluator_employees.total_personal,
+		evaluated_employees.total_avg,
+		evaluator_employees.has_assessed,
+		evaluator_employees.requires_assessment,
+		evaluator_employees.status,
+		master_karyawan.Name, 
+		master_karyawan.Department, 
+		master_karyawan.Position,
+		CASE WHEN evaluator_employees.has_assessed THEN msc.label ELSE NULL END AS classification,
+		'lihat-penilaian' as action
+	`
+
 	db := d.db.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).
-		Select(`
-			evaluated_employees.evaluation_id,
-			evaluated_employees.id as evaluated_id,
-			evaluator_employees.id as evaluator_id,
-			evaluated_employees.evaluation_id,
-			evaluated_employees.employee_id,
-			evaluator_employees.total_functional,
-			evaluator_employees.total_personal,
-			evaluated_employees.total_avg,
-			evaluator_employees.has_assessed,
-			evaluator_employees.requires_assessment,
-			evaluator_employees.status,
-			master_karyawan.Name, 
-			master_karyawan.Department, 
-			master_karyawan.Position,
-			'lihat-penilaian' as action
-		`).
+		Select(slqSelect).
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
 		Joins("JOIN evaluator_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
+		// LEFT JOIN ke master_score_classifications dengan kondisi range fleksibel (MySQL)
+		Joins(`LEFT JOIN master_score_classifications msc ON (
+			(msc.min_score IS NULL AND msc.max_score >= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+			OR (msc.max_score IS NULL AND msc.min_score <= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+			OR (msc.min_score <= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED) AND msc.max_score >= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+		)`).
 		Order("evaluated_employees.id desc").
 		Group("evaluated_employees.employee_id")
-	if departement != "" {
-		db.Where("master_karyawan.Department = ?", departement)
-	}
-	if search != "" {
-		db.Where("master_karyawan.Name like '%" + search + "%' or master_karyawan.Position like '%" + search + "%'")
-	}
-	db.Count(&count)
 
+	// departement filter (parameterized)
+	if departement != "" {
+		db = db.Where("master_karyawan.Department = ?", departement)
+	}
+
+	// parameterized search
+	if search != "" {
+		like := "%" + search + "%"
+		db = db.Where("master_karyawan.Name LIKE ? OR master_karyawan.Position LIKE ?", like, like)
+	}
+
+	// hitung total (perhatikan: Count setelah Group akan menghitung jumlah group)
+	if err = db.Count(&count).Error; err != nil {
+		return
+	}
+
+	// paging
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
 
+	// scan ke struct (pastikan struct EvaluatorEmployeeList punya field Classification)
 	err = db.Scan(&data).Error
 	return
 }
 
 func (d evaluatedEmployeeRepository) RetrieveNeedsWithPaging(paging datapaging.Datapaging, employeeId int64, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+	slqSelect := `
+		evaluated_employees.evaluation_id,
+		evaluated_employees.id as evaluated_id,
+		evaluator_employees.id as evaluator_id,
+		evaluated_employees.evaluation_id,
+		evaluated_employees.employee_id,
+		evaluator_employees.total_functional,
+		evaluator_employees.total_personal,
+		evaluated_employees.total_avg,
+		evaluator_employees.has_assessed,
+		evaluator_employees.requires_assessment,
+		evaluator_employees.status,
+		master_karyawan.Name, 
+		master_karyawan.Department, 
+		master_karyawan.Position,
+		CASE WHEN evaluator_employees.has_assessed THEN msc.label ELSE NULL END AS classification,
+		'beri-penilaian' as action
+	`
+
 	db := d.db.Model(&evaluatedEmployeesModel.EvaluatedEmployee{}).
-		Select(`
-			evaluated_employees.evaluation_id,
-			evaluated_employees.id as evaluated_id,
-			evaluator_employees.id as evaluator_id,
-			evaluated_employees.evaluation_id,
-			evaluated_employees.employee_id,
-			evaluator_employees.total_functional,
-			evaluator_employees.total_personal,
-			evaluated_employees.total_avg,
-			evaluator_employees.has_assessed,
-			evaluator_employees.requires_assessment,
-			evaluator_employees.status,
-			master_karyawan.Name, 
-			master_karyawan.Department, 
-			master_karyawan.Position,
-			'beri-penilaian' as action
-		`).
+		Select(slqSelect).
 		Joins("JOIN evaluator_employees on evaluator_employees.evaluated_employee_id = evaluated_employees.id").
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
+		Joins(`LEFT JOIN master_score_classifications msc ON (
+			(msc.min_score IS NULL AND msc.max_score >= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+			OR (msc.max_score IS NULL AND msc.min_score <= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+			OR (msc.min_score <= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED) AND msc.max_score >= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+		)`).
 		Where("evaluator_employees.employee_id = ?", employeeId).
 		Order("evaluated_employees.id desc")
-	if search != "" {
-		db.Where("master_karyawan.Name like '%" + search + "%' or master_karyawan.Position like '%" + search + "%'")
-	}
-	db.Count(&count)
 
+	if search != "" {
+		like := "%" + search + "%"
+		db = db.Where("master_karyawan.Name LIKE ? OR master_karyawan.Position LIKE ?", like, like)
+	}
+
+	// count total before limit
+	if err = db.Count(&count).Error; err != nil {
+		return
+	}
+
+	// paging
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)

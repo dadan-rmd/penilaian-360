@@ -52,43 +52,58 @@ func (d evaluatorEmployeeRepository) UpdateEmailSentByEvaluatedEmployeeIdAndEmpl
 }
 
 func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapaging, evaluationId, evaluatedEmployeeId int64) (entities []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
+	// select + classification
+	slqSelect := `
+		evaluated_employees.evaluation_id,
+		evaluated_employees.id as evaluated_id,
+		evaluator_employees.id as evaluator_id,
+		evaluator_employees.employee_id,
+		evaluator_employees.total_functional,
+		evaluator_employees.total_personal,
+		evaluator_employees.total_avg,
+		evaluator_employees.has_assessed,
+		evaluator_employees.requires_assessment,
+		evaluator_employees.status,
+		master_karyawan.Name,
+		master_karyawan.Department,
+		master_karyawan.Position,
+		CASE 
+			WHEN evaluator_employees.total_avg > 0 THEN 'Sudah Menilai' 
+			ELSE 'Belum Menilai' 
+		END AS action,
+		CASE WHEN evaluator_employees.has_assessed THEN msc.label ELSE NULL END AS classification
+	`
+
+	// build base query (LEFT JOIN to msc for classification)
 	db := d.db.
 		Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
-		Select(`
-			evaluated_employees.evaluation_id,
-			evaluated_employees.id as evaluated_id,
-			evaluator_employees.id as evaluator_id,
-			evaluator_employees.employee_id,
-			evaluator_employees.total_functional,
-			evaluator_employees.total_personal,
-			evaluator_employees.total_avg,
-			evaluator_employees.has_assessed,
-			evaluator_employees.requires_assessment,
-			evaluator_employees.status,
-			master_karyawan.Name,
-			master_karyawan.Department,
-			master_karyawan.Position,
-			CASE 
-				WHEN evaluator_employees.total_avg > 0 THEN 'Sudah Menilai' 
-				ELSE 'Belum Menilai' 
-			END AS action
-		`).
+		Select(slqSelect).
 		Joins("JOIN master_karyawan ON master_karyawan.id = evaluator_employees.employee_id").
 		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
+		Joins(`LEFT JOIN master_score_classifications msc ON (
+			(msc.min_score IS NULL AND msc.max_score >= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
+			OR (msc.max_score IS NULL AND msc.min_score <= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
+			OR (msc.min_score <= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED) AND msc.max_score >= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
+		)`).
 		Where("evaluated_employees.employee_id = ?", evaluatedEmployeeId).
 		Where(evaluatorEmployeesModel.EvaluatorEmployee{
 			EvaluationId: evaluationId,
 		}).
-		Order("evaluator_employees.id DESC").
-		Count(&count)
+		Order("evaluator_employees.id DESC")
 
+	// count total rows (before applying offset/limit)
+	if err = db.Count(&count).Error; err != nil {
+		return
+	}
+
+	// apply paging if requested
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
 
-	err = db.Find(&entities).Error
-	if err != nil {
+	// fetch entities
+	if err = db.Find(&entities).Error; err != nil {
 		return
 	}
 	return
@@ -103,94 +118,132 @@ func (d evaluatorEmployeeRepository) Save(tx *gorm.DB, data *[]evaluatorEmployee
 }
 
 func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Datapaging, employeeId int64, email, notDepartement, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
-	slqSelect := `
-				evaluated_employees.evaluation_id,
-				evaluated_employees.id as evaluated_id,
-				evaluator_employees.id as evaluator_id,
-				evaluated_employees.employee_id,
-				evaluator_employees.total_functional,
-				evaluator_employees.total_personal,
-				evaluated_employees.evaluation_id,
-				evaluated_employees.total_avg,
-				evaluator_employees.has_assessed,
-				evaluator_employees.requires_assessment,
-				evaluator_employees.status,
-				master_karyawan.Name, 
-				master_karyawan.Department, 
-				master_karyawan.Position`
+	slqSelectBase := `
+		evaluated_employees.evaluation_id,
+		evaluated_employees.id as evaluated_id,
+		evaluator_employees.id as evaluator_id,
+		evaluated_employees.employee_id,
+		evaluator_employees.total_functional,
+		evaluator_employees.total_personal,
+		evaluated_employees.total_avg,
+		evaluator_employees.has_assessed,
+		evaluator_employees.requires_assessment,
+		evaluator_employees.status,
+		master_karyawan.Name, 
+		master_karyawan.Department, 
+		master_karyawan.Position,
+		CASE WHEN evaluator_employees.has_assessed THEN msc.label ELSE NULL END AS classification
+	`
+
+	// base query + joins (LEFT JOIN to msc with flexible range handling)
 	db := d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
 		Where("evaluator_employees.employee_id = ?", employeeId).
 		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluated_employees.employee_id").
+		Joins(`LEFT JOIN master_score_classifications msc ON (
+			(msc.min_score IS NULL AND msc.max_score >= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+			OR (msc.max_score IS NULL AND msc.min_score <= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+			OR (msc.min_score <= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED) AND msc.max_score >= CAST(ROUND(evaluated_employees.total_avg) AS SIGNED))
+		)`).
 		Order("evaluated_employees.id desc")
+
+	// build select depending on email/notDepartement
 	if notDepartement != "" {
 		if email != "" {
-			db.Select(slqSelect + `,
-				CASE 
-					WHEN evaluator_employees.cc = "` + email + `" THEN 'lihat-penilaian' 
-					ELSE NULL 
-				END AS action
-			`)
+			// use parameterized Select for email in CASE
+			db = db.Select(slqSelectBase+`, CASE WHEN evaluator_employees.cc = ? THEN 'lihat-penilaian' ELSE NULL END AS action`, email)
 		} else {
-			db.Select(slqSelect)
+			db = db.Select(slqSelectBase + ", NULL AS action")
 		}
-		db.Where("master_karyawan.Department != ?", notDepartement)
+		db = db.Where("master_karyawan.Department != ?", notDepartement)
 	} else {
-		db.Select(slqSelect)
+		db = db.Select(slqSelectBase + ", NULL AS action")
 	}
-	if departement != "" {
-		db.Where("master_karyawan.Department = ?", departement)
-	}
-	if search != "" {
-		db.Where("master_karyawan.Name like '%" + search + "%' or master_karyawan.Position like '%" + search + "%'")
-	}
-	db.Count(&count)
 
+	// departement filter
+	if departement != "" {
+		db = db.Where("master_karyawan.Department = ?", departement)
+	}
+
+	// parameterized search (MySQL LIKE)
+	if search != "" {
+		like := "%" + search + "%"
+		db = db.Where("master_karyawan.Name LIKE ? OR master_karyawan.Position LIKE ?", like, like)
+	}
+
+	// count total
+	if err = db.Count(&count).Error; err != nil {
+		return
+	}
+
+	// paging
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
 
+	// scan results
 	err = db.Scan(&data).Error
 	return
 }
 
 func (d evaluatorEmployeeRepository) RetrieveEvaluatorDetailWithPaging(paging datapaging.Datapaging, employeeId int64, departement, search string) (data []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
-	db := d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
-		Select(`
-			evaluated_employees.evaluation_id,
-			evaluated_employees.id as evaluated_id,
-			evaluator_employees.id as evaluator_id,
-			evaluator_employees.evaluation_id,
-			evaluator_employees.employee_id,
-			evaluator_employees.total_functional,
-			evaluator_employees.total_personal,
-			evaluator_employees.total_avg,
-			evaluator_employees.has_assessed,
-			evaluator_employees.requires_assessment,
-			evaluator_employees.status,
-			master_karyawan.Name, 
-			master_karyawan.Department, 
-			master_karyawan.Position,
-			'baca-penilaian' as action
-		`).
-		Joins("JOIN master_karyawan on master_karyawan.id = evaluator_employees.employee_id").
-		Where("evaluated_employees.employee_id = ?", employeeId).
-		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
-		Order("evaluator_employees.id desc")
-	if departement != "" {
-		db.Where("master_karyawan.Department = ?", departement)
-	}
-	if search != "" {
-		db.Where("master_karyawan.Name like '%" + search + "%' or master_karyawan.Position like '%" + search + "%'")
-	}
-	db.Count(&count)
+	slqSelect := `
+		evaluated_employees.evaluation_id,
+		evaluated_employees.id as evaluated_id,
+		evaluator_employees.id as evaluator_id,
+		evaluator_employees.evaluation_id,
+		evaluator_employees.employee_id,
+		evaluator_employees.total_functional,
+		evaluator_employees.total_personal,
+		evaluator_employees.total_avg,
+		evaluator_employees.has_assessed,
+		evaluator_employees.requires_assessment,
+		evaluator_employees.status,
+		master_karyawan.Name, 
+		master_karyawan.Department, 
+		master_karyawan.Position,
+		CASE WHEN evaluator_employees.has_assessed THEN msc.label ELSE NULL END AS classification,
+		'baca-penilaian' as action
+	`
 
+	db := d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
+		Select(slqSelect).
+		// join evaluated_employees first so we can filter by evaluated_employees.employee_id
+		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
+		Joins("JOIN master_karyawan on master_karyawan.id = evaluator_employees.employee_id").
+		// left join to classification master with flexible range checks (MySQL)
+		Joins(`LEFT JOIN master_score_classifications msc ON (
+			(msc.min_score IS NULL AND msc.max_score >= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
+			OR (msc.max_score IS NULL AND msc.min_score <= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
+			OR (msc.min_score <= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED) AND msc.max_score >= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
+		)`).
+		Where("evaluated_employees.employee_id = ?", employeeId).
+		Order("evaluator_employees.id desc")
+
+	// departement filter
+	if departement != "" {
+		db = db.Where("master_karyawan.Department = ?", departement)
+	}
+
+	// parameterized search (safe)
+	if search != "" {
+		like := "%" + search + "%"
+		db = db.Where("master_karyawan.Name LIKE ? OR master_karyawan.Position LIKE ?", like, like)
+	}
+
+	// count total (before limit/offset)
+	if err = db.Count(&count).Error; err != nil {
+		return
+	}
+
+	// paging
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
 
+	// scan results into struct (make sure EvaluatorEmployeeList has Classification field)
 	err = db.Scan(&data).Error
 	return
 }

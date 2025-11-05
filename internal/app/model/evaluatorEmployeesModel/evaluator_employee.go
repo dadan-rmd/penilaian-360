@@ -29,6 +29,7 @@ type (
 		TotalPersonal      float64 `json:"total_personal"`
 		TotalAvg           float64 `json:"total_avg"`
 		HasAssessed        bool    `json:"has_assessed"`
+		Classification     string  `json:"classification"`
 		RequiresAssessment bool    `json:"requires_assessment"`
 		Status             string  `json:"status"`
 		Action             string  `json:"action"`
