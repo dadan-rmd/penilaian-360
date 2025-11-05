@@ -239,8 +239,7 @@ func (d evaluatorEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalFunct
 			total_personal = ?,
 			total_avg = ?,
 			has_assessed = TRUE,
-			status = 'pending',
-			updated_at = NOW()
+			status = 'pending'
 		WHERE id = ?
 	`
 
