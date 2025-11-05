@@ -213,18 +213,42 @@ func (d evaluatorEmployeeRepository) TotalAvg(tx *gorm.DB, evaluatedEmployeeId i
 func (d evaluatorEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalFunctional, totalPersonal, totalAvg float64) (err error) {
 	var db *gorm.DB
 	if tx != nil {
-		db = tx.Model(&evaluatorEmployeesModel.EvaluatorEmployee{})
+		db = tx
 	} else {
-		db = d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{})
+		db = d.db
 	}
-	err = db.Where("id = ?", id).
-		Updates(evaluatorEmployeesModel.EvaluatorEmployee{
-			TotalFunctional: totalFunctional,
-			TotalPersonal:   totalPersonal,
-			TotalAvg:        totalAvg,
-			HasAssessed:     true,
-			Status:          "pending",
-		}).Error
+
+	// First, reset the scores for this evaluation
+	resetQuery := `
+		UPDATE evaluator_employees 
+		SET 
+			total_functional = 0,
+			total_personal = 0,
+			total_avg = 0
+		WHERE id = ?
+	`
+	if err = db.Exec(resetQuery, id).Error; err != nil {
+		return
+	}
+
+	// Then update with new scores
+	updateQuery := `
+		UPDATE evaluator_employees 
+		SET 
+			total_functional = ?,
+			total_personal = ?,
+			total_avg = ?,
+			has_assessed = TRUE,
+			status = 'pending',
+			updated_at = NOW()
+		WHERE id = ?
+	`
+
+	err = db.Exec(updateQuery,
+		totalFunctional,
+		totalPersonal,
+		totalAvg,
+		id).Error
 	return
 }
 

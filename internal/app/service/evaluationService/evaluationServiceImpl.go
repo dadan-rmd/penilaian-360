@@ -16,6 +16,7 @@ import (
 	"penilaian-360/internal/app/repository/evaluatorEmployeeRepository"
 	"penilaian-360/internal/app/repository/questionRepository"
 	"slices"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -121,7 +122,29 @@ func (s evaluationService) Score(record *loggers.Data, req evaluationModel.Evalu
 		totalFunctional, totalPersonal, maxFunctional, maxPersonal int64
 		avgFunctional, avgPersonal, sumAvg, avg                    float64
 		evaluationAnswer                                           []evaluationModel.EvaluationAnswer
+		functionalWeight, personalWeight                           float64
 	)
+
+	// Set default weights
+	functionalWeight = 0.7 // Default 70%
+	personalWeight = 0.3   // Default 30%
+
+	// Read weights from environment variables
+	if w := os.Getenv("FUNCTIONAL_WEIGHT"); w != "" {
+		if fw, parseErr := strconv.ParseFloat(w, 64); parseErr == nil {
+			functionalWeight = fw / 100 // Convert percentage to decimal
+		} else {
+			loggers.Logf(record, fmt.Sprintf("Warning: Invalid FUNCTIONAL_WEIGHT value: %v", parseErr))
+		}
+	}
+
+	if w := os.Getenv("PERSONAL_WEIGHT"); w != "" {
+		if pw, parseErr := strconv.ParseFloat(w, 64); parseErr == nil {
+			personalWeight = pw / 100 // Convert percentage to decimal
+		} else {
+			loggers.Logf(record, fmt.Sprintf("Warning: Invalid PERSONAL_WEIGHT value: %v", parseErr))
+		}
+	}
 	tx := s.db.Begin()
 	defer func() {
 		if err != nil {
@@ -159,19 +182,22 @@ func (s evaluationService) Score(record *loggers.Data, req evaluationModel.Evalu
 		loggers.Logf(record, fmt.Sprintf("Err, evaluator FindByID %v", err))
 		return
 	}
+	// Validate weights sum up to 1.0 (100%)
+	if functionalWeight+personalWeight != 1.0 {
+		loggers.Logf(record, fmt.Sprintf("Warning: Weights do not sum to 100%%. Functional: %.0f%%, Personal: %.0f%%", functionalWeight*100, personalWeight*100))
+	}
+
 	if countRateFunctional > 0 {
 		maxFunctional = 5 * countRateFunctional
-		avgFunctional = float64(totalFunctional) / float64(maxFunctional) * 100
+		avgFunctional = (float64(totalFunctional) / float64(maxFunctional) * 100) * functionalWeight
 	}
 
 	if countRatePersonal > 0 {
 		maxPersonal = 5 * countRatePersonal
-		avgPersonal = float64(totalPersonal) / float64(maxPersonal) * 100
+		avgPersonal = (float64(totalPersonal) / float64(maxPersonal) * 100) * personalWeight
 	}
-	sumAvg = avgFunctional + avgFunctional
-	if sumAvg > 0 {
-		avg = sumAvg / 2
-	}
+	sumAvg = avgFunctional + avgPersonal // Changed from avgFunctional + avgFunctional to avgFunctional + avgPersonal
+	avg = sumAvg                         // No need to divide by 2 since weights are already applied
 	err = s.evaluatorEmployeeRepo.UpdateAvg(tx, req.Data[0].EvaluatorEmployeeId, avgFunctional, avgPersonal, avg)
 	if err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, evaluator UpdateAvg %v", err))
