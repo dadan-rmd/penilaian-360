@@ -33,7 +33,7 @@ func (d evaluatorEmployeeRepository) FindEmployeeIdByEvaluationId(evaluationId, 
 			EvaluationId: evaluationId,
 		})
 	if paramEmployeeId != 0 {
-		db = db.Where("employee_id != ?", employeeId)
+		db = db.Where("employee_id != ?", paramEmployeeId)
 	}
 	err = db.Pluck("employee_id", &employeeId).Error
 	if err != nil {
@@ -52,7 +52,6 @@ func (d evaluatorEmployeeRepository) UpdateEmailSentByEvaluatedEmployeeIdAndEmpl
 }
 
 func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapaging, evaluationId, evaluatedEmployeeId int64) (entities []evaluatorEmployeesModel.EvaluatorEmployeeList, count int64, err error) {
-	// select + classification
 	slqSelect := `
 		evaluated_employees.evaluation_id,
 		evaluated_employees.id as evaluated_id,
@@ -74,7 +73,6 @@ func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapag
 		CASE WHEN evaluator_employees.has_assessed THEN msc.label ELSE NULL END AS classification
 	`
 
-	// build base query (LEFT JOIN to msc for classification)
 	db := d.db.
 		Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
 		Select(slqSelect).
@@ -91,18 +89,15 @@ func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapag
 		}).
 		Order("evaluator_employees.id DESC")
 
-	// count total rows (before applying offset/limit)
 	if err = db.Count(&count).Error; err != nil {
 		return
 	}
 
-	// apply paging if requested
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
 
-	// fetch entities
 	if err = db.Find(&entities).Error; err != nil {
 		return
 	}
@@ -111,9 +106,9 @@ func (d evaluatorEmployeeRepository) FindByEvaluatorId(paging datapaging.Datapag
 
 func (d evaluatorEmployeeRepository) Save(tx *gorm.DB, data *[]evaluatorEmployeesModel.EvaluatorEmployee) error {
 	if tx != nil {
-		return tx.Save(&data).Error
+		return tx.Save(data).Error
 	} else {
-		return d.db.Save(&data).Error
+		return d.db.Save(data).Error
 	}
 }
 
@@ -135,7 +130,6 @@ func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 		CASE WHEN evaluator_employees.has_assessed THEN msc.label ELSE NULL END AS classification
 	`
 
-	// base query + joins (LEFT JOIN to msc with flexible range handling)
 	db := d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
 		Where("evaluator_employees.employee_id = ?", employeeId).
 		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
@@ -147,10 +141,8 @@ func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 		)`).
 		Order("evaluated_employees.id desc")
 
-	// build select depending on email/notDepartement
 	if notDepartement != "" {
 		if email != "" {
-			// use parameterized Select for email in CASE
 			db = db.Select(slqSelectBase+`, CASE WHEN evaluator_employees.cc = ? THEN 'lihat-penilaian' ELSE NULL END AS action`, email)
 		} else {
 			db = db.Select(slqSelectBase + ", NULL AS action")
@@ -160,29 +152,24 @@ func (d evaluatorEmployeeRepository) RetrieveListWithPaging(paging datapaging.Da
 		db = db.Select(slqSelectBase + ", NULL AS action")
 	}
 
-	// departement filter
 	if departement != "" {
 		db = db.Where("master_karyawan.Department = ?", departement)
 	}
 
-	// parameterized search (MySQL LIKE)
 	if search != "" {
 		like := "%" + search + "%"
 		db = db.Where("master_karyawan.Name LIKE ? OR master_karyawan.Position LIKE ?", like, like)
 	}
 
-	// count total
 	if err = db.Count(&count).Error; err != nil {
 		return
 	}
 
-	// paging
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
 
-	// scan results
 	err = db.Scan(&data).Error
 	return
 }
@@ -209,10 +196,8 @@ func (d evaluatorEmployeeRepository) RetrieveEvaluatorDetailWithPaging(paging da
 
 	db := d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{}).
 		Select(slqSelect).
-		// join evaluated_employees first so we can filter by evaluated_employees.employee_id
 		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
 		Joins("JOIN master_karyawan on master_karyawan.id = evaluator_employees.employee_id").
-		// left join to classification master with flexible range checks (MySQL)
 		Joins(`LEFT JOIN master_score_classifications msc ON (
 			(msc.min_score IS NULL AND msc.max_score >= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
 			OR (msc.max_score IS NULL AND msc.min_score <= CAST(ROUND(evaluator_employees.total_avg) AS SIGNED))
@@ -221,29 +206,24 @@ func (d evaluatorEmployeeRepository) RetrieveEvaluatorDetailWithPaging(paging da
 		Where("evaluated_employees.employee_id = ?", employeeId).
 		Order("evaluator_employees.id desc")
 
-	// departement filter
 	if departement != "" {
 		db = db.Where("master_karyawan.Department = ?", departement)
 	}
 
-	// parameterized search (safe)
 	if search != "" {
 		like := "%" + search + "%"
 		db = db.Where("master_karyawan.Name LIKE ? OR master_karyawan.Position LIKE ?", like, like)
 	}
 
-	// count total (before limit/offset)
 	if err = db.Count(&count).Error; err != nil {
 		return
 	}
 
-	// paging
 	if paging.Page != 0 {
 		pg := datapaging.New(paging.Limit, paging.Page, []string{})
 		db = db.Offset(pg.GetOffset()).Limit(paging.Limit)
 	}
 
-	// scan results into struct (make sure EvaluatorEmployeeList has Classification field)
 	err = db.Scan(&data).Error
 	return
 }
@@ -252,14 +232,15 @@ func (d evaluatorEmployeeRepository) TotalAvg(tx *gorm.DB, evaluatedEmployeeId i
 	var db *gorm.DB
 	if tx != nil {
 		db = tx.Model(&evaluatorEmployeesModel.EvaluatorEmployee{})
-
 	} else {
 		db = d.db.Model(&evaluatorEmployeesModel.EvaluatorEmployee{})
 	}
-	err = db.Select("IFNULL(SUM(evaluator_employees.total_avg) / COUNT(evaluator_employees.evaluation_id), 0) AS total_avg ").
+
+	err = db.Select("COALESCE(AVG(evaluator_employees.total_avg), 0) AS total_avg").
 		Joins("JOIN evaluated_employees ON evaluated_employees.id = evaluator_employees.evaluated_employee_id").
-		Where("evaluated_employees.employee_id <> evaluator_employees.employee_id and evaluator_employees.evaluated_employee_id = ? and evaluator_employees.requires_assessment = ?", evaluatedEmployeeId, true).
+		Where("evaluator_employees.evaluated_employee_id = ? AND (evaluator_employees.has_assessed = ? OR evaluator_employees.total_avg > 0)", evaluatedEmployeeId, true).
 		Pluck("total_avg", &totalAvg).Error
+
 	return
 }
 
@@ -271,7 +252,6 @@ func (d evaluatorEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalFunct
 		db = d.db
 	}
 
-	// First, reset the scores for this evaluation
 	resetQuery := `
 		UPDATE evaluator_employees 
 		SET 
@@ -284,7 +264,6 @@ func (d evaluatorEmployeeRepository) UpdateAvg(tx *gorm.DB, id int64, totalFunct
 		return
 	}
 
-	// Then update with new scores
 	updateQuery := `
 		UPDATE evaluator_employees 
 		SET 
