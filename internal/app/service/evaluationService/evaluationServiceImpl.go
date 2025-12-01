@@ -120,10 +120,9 @@ func (s evaluationService) EvaluationDetail(record *loggers.Data, paging datapag
 
 func (s evaluationService) Score(record *loggers.Data, req evaluationModel.EvaluationAnswerRequests) (err error) {
 	var (
-		totalFunctional, totalPersonal, maxFunctional, maxPersonal int64
-		avgFunctional, avgPersonal, sumAvg, avg                    float64
-		evaluationAnswer                                           []evaluationModel.EvaluationAnswer
-		functionalWeight, personalWeight                           float64
+		evaluationAnswer []evaluationModel.EvaluationAnswer
+		functionalWeight float64
+		personalWeight   float64
 	)
 
 	if len(req.Data) == 0 {
@@ -131,27 +130,27 @@ func (s evaluationService) Score(record *loggers.Data, req evaluationModel.Evalu
 		return fmt.Errorf("empty request data")
 	}
 
-	// Set default weights
-	functionalWeight = 0.7 // Default 70%
-	personalWeight = 0.3   // Default 30%
+	// defaults
+	functionalWeight = 0.7
+	personalWeight = 0.3
 
-	// Read weights from environment variables
+	// read env weights (optional)
 	if w := os.Getenv("FUNCTIONAL_WEIGHT"); w != "" {
-		if fw, parseErr := strconv.ParseFloat(w, 64); parseErr == nil {
-			functionalWeight = fw / 100 // Convert percentage to decimal
+		if fw, perr := strconv.ParseFloat(w, 64); perr == nil {
+			functionalWeight = fw / 100
 		} else {
-			loggers.Logf(record, fmt.Sprintf("Warning: Invalid FUNCTIONAL_WEIGHT value: %v", parseErr))
+			loggers.Logf(record, fmt.Sprintf("Warning: Invalid FUNCTIONAL_WEIGHT value: %v", perr))
 		}
 	}
-
 	if w := os.Getenv("PERSONAL_WEIGHT"); w != "" {
-		if pw, parseErr := strconv.ParseFloat(w, 64); parseErr == nil {
-			personalWeight = pw / 100 // Convert percentage to decimal
+		if pw, perr := strconv.ParseFloat(w, 64); perr == nil {
+			personalWeight = pw / 100
 		} else {
-			loggers.Logf(record, fmt.Sprintf("Warning: Invalid PERSONAL_WEIGHT value: %v", parseErr))
+			loggers.Logf(record, fmt.Sprintf("Warning: Invalid PERSONAL_WEIGHT value: %v", perr))
 		}
 	}
 
+	// normalize weights
 	eps := 1e-9
 	sumWeights := functionalWeight + personalWeight
 	if math.Abs(sumWeights-1.0) > eps {
@@ -166,6 +165,12 @@ func (s evaluationService) Score(record *loggers.Data, req evaluationModel.Evalu
 		}
 	}
 
+	// collect evaluationAnswer for saving (inner struct)
+	for _, v := range req.Data {
+		evaluationAnswer = append(evaluationAnswer, v.EvaluationAnswer)
+	}
+
+	// begin transaction
 	tx := s.db.Begin()
 	if tx.Error != nil {
 		loggers.Logf(record, fmt.Sprintf("Err: begin tx %v", tx.Error))
@@ -180,89 +185,100 @@ func (s evaluationService) Score(record *loggers.Data, req evaluationModel.Evalu
 			return
 		}
 		if err != nil {
-			if errRollback := tx.Rollback(); errRollback != nil {
-				loggers.Logf(record, fmt.Sprintf("Err, Rollback %v", errRollback))
+			if rb := tx.Rollback(); rb != nil {
+				loggers.Logf(record, fmt.Sprintf("Err, Rollback %v", rb))
 			}
 			return
 		}
-		if commitErr := tx.Commit().Error; commitErr != nil {
-			loggers.Logf(record, fmt.Sprintf("Err, Commit %v", commitErr))
-			err = commitErr
+		if cm := tx.Commit().Error; cm != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, Commit %v", cm))
+			err = cm
 		}
 	}()
 
-	for _, v := range req.Data {
-		evaluationAnswer = append(evaluationAnswer, v.EvaluationAnswer)
-	}
-
+	// save answers
 	if err = s.evaluationAnswerRepo.Save(tx, &evaluationAnswer); err != nil {
 		loggers.Logf(record, fmt.Sprintf("Err, Save %v", err))
 		return
 	}
 
-	for _, v := range req.Data {
-		if v.Type == string(constants.QuestionTypeRate) && v.CompetencyType == string(constants.TypeOfCompetencyFunctional) {
-			totalFunctional += int64(v.FinalPoint)
-		} else if v.Type == string(constants.QuestionTypeRate) && v.CompetencyType == string(constants.TypeOfCompetencyPersonal) {
-			totalPersonal += int64(v.FinalPoint)
+	// ---- NEW: accumulate totals & counts per evaluator using maps (use req.Data fields) ----
+	totalsFunctional := make(map[int64]int64) // evaluatorID -> total points functional
+	totalsPersonal := make(map[int64]int64)   // evaluatorID -> total points personal
+	countsFunctional := make(map[int64]int64) // evaluatorID -> count functional answers
+	countsPersonal := make(map[int64]int64)   // evaluatorID -> count personal answers
+	evaluatorIDs := make(map[int64]struct{})  // set of evaluator IDs encountered
+
+	for _, item := range req.Data {
+		eid := item.EvaluationAnswer.EvaluatorEmployeeId
+		evaluatorIDs[eid] = struct{}{}
+
+		// Use the wrapper fields from item (not inner EvaluationAnswer) — this fixes the undefined field error
+		if item.Type == string(constants.QuestionTypeRate) && item.CompetencyType == string(constants.TypeOfCompetencyFunctional) {
+			totalsFunctional[eid] += int64(item.FinalPoint)
+			countsFunctional[eid]++
+		} else if item.Type == string(constants.QuestionTypeRate) && item.CompetencyType == string(constants.TypeOfCompetencyPersonal) {
+			totalsPersonal[eid] += int64(item.FinalPoint)
+			countsPersonal[eid]++
 		}
 	}
 
-	countRateFunctional, err := s.questionRepo.CountRateByEvaluationIdAndType(tx, req.Data[0].EvaluationId, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyFunctional))
-	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, CountRate functional %v", err))
-		return
+	// process every evaluator we saw
+	for eid := range evaluatorIDs {
+		totalFunc := totalsFunctional[eid]
+		totalPers := totalsPersonal[eid]
+		cntFunc := countsFunctional[eid]
+		cntPers := countsPersonal[eid]
+
+		// global total (based only on submitted answers)
+		totalAll := totalFunc + totalPers
+		cntAll := cntFunc + cntPers
+
+		var percentAll float64
+		if cntAll > 0 {
+			maxAll := float64(5 * cntAll)
+			percentAll = float64(totalAll) / maxAll * 100.0
+		} else {
+			percentAll = 0
+		}
+
+		avgFunctional := percentAll * functionalWeight
+		avgPersonal := percentAll * personalWeight
+		avg := percentAll // overall percent 0..100
+
+		loggers.Logf(record, fmt.Sprintf(
+			"Score computed (evaluator=%d): totalFunctional=%d totalPersonal=%d countFunc=%d countPers=%d percentAll=%.6f avgFunctional=%.6f avgPersonal=%.6f avgTotal=%.6f",
+			eid, totalFunc, totalPers, cntFunc, cntPers, percentAll, avgFunctional, avgPersonal, avg,
+		))
+
+		// update evaluator avg
+		if err = s.evaluatorEmployeeRepo.UpdateAvg(tx, eid, avgFunctional, avgPersonal, avg); err != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, evaluator UpdateAvg %v", err))
+			return err
+		}
+
+		// recompute totalAvg for evaluated employee
+		evaluatorEmployee, err2 := s.evaluatorEmployeeRepo.FindByID(tx, eid)
+		if err2 != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, evaluator FindByID %v", err2))
+			return err2
+		}
+
+		totalAvg, err2 := s.evaluatorEmployeeRepo.TotalAvg(tx, evaluatorEmployee.EvaluatedEmployeeId)
+		if err2 != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, evaluator TotalAvg %v", err2))
+			return err2
+		}
+
+		loggers.Logf(record, fmt.Sprintf("TotalAvg for evaluated_employee_id=%d is %.6f", evaluatorEmployee.EvaluatedEmployeeId, totalAvg))
+
+		if err2 = s.evaluatedEmployeeRepo.UpdateAvg(tx, evaluatorEmployee.EvaluatedEmployeeId, totalAvg); err2 != nil {
+			loggers.Logf(record, fmt.Sprintf("Err, evaluated UpdateAvg %v", err2))
+			return err2
+		}
 	}
-	countRatePersonal, err := s.questionRepo.CountRateByEvaluationIdAndType(tx, req.Data[0].EvaluationId, string(constants.QuestionTypeRate), string(constants.TypeOfCompetencyPersonal))
-	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, CountRate personal %v", err))
-		return
-	}
 
-	if countRateFunctional > 0 {
-		maxFunctional = 5 * countRateFunctional
-		avgFunctional = (float64(totalFunctional) / float64(maxFunctional) * 100.0) * functionalWeight
-	} else {
-		avgFunctional = 0
-	}
-
-	if countRatePersonal > 0 {
-		maxPersonal = 5 * countRatePersonal
-		avgPersonal = (float64(totalPersonal) / float64(maxPersonal) * 100.0) * personalWeight
-	} else {
-		avgPersonal = 0
-	}
-
-	sumAvg = avgFunctional + avgPersonal
-	avg = sumAvg
-
-	loggers.Logf(record, fmt.Sprintf("Score computed: totalFunctional=%d totalPersonal=%d countFunc=%d countPers=%d avgFunctional=%.6f avgPersonal=%.6f avgTotal=%.6f", totalFunctional, totalPersonal, countRateFunctional, countRatePersonal, avgFunctional, avgPersonal, avg))
-
-	if err = s.evaluatorEmployeeRepo.UpdateAvg(tx, req.Data[0].EvaluatorEmployeeId, avgFunctional, avgPersonal, avg); err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, evaluator UpdateAvg %v", err))
-		return
-	}
-
-	evaluatorEmployee, err := s.evaluatorEmployeeRepo.FindByID(tx, req.Data[0].EvaluatorEmployeeId)
-	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, evaluator FindByID %v", err))
-		return
-	}
-
-	totalAvg, err := s.evaluatorEmployeeRepo.TotalAvg(tx, evaluatorEmployee.EvaluatedEmployeeId)
-	if err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, evaluator TotalAvg %v", err))
-		return
-	}
-
-	loggers.Logf(record, fmt.Sprintf("TotalAvg for evaluated_employee_id=%d is %.6f", evaluatorEmployee.EvaluatedEmployeeId, totalAvg))
-
-	if err = s.evaluatedEmployeeRepo.UpdateAvg(tx, evaluatorEmployee.EvaluatedEmployeeId, totalAvg); err != nil {
-		loggers.Logf(record, fmt.Sprintf("Err, evaluated UpdateAvg %v", err))
-		return
-	}
-
-	return
+	return nil
 }
 
 func (s evaluationService) ScoreDetail(record *loggers.Data, evaluationId, evaluatorEmployeeId int64) (res *[]evaluationModel.EvaluationAnswerResponse, err error) {

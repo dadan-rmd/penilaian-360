@@ -1,6 +1,7 @@
 package employeeRepository
 
 import (
+	"fmt"
 	"penilaian-360/internal/app/model/employeeModel"
 	"penilaian-360/internal/app/model/evaluatedEmployeesModel"
 
@@ -47,4 +48,28 @@ func (d employeeRepository) FindNameAndEmployedIDByIds(ids []int64) (entities []
 		Where("master_karyawan.id in (?)", ids).
 		Find(&entities).Error
 	return
+}
+
+func (d employeeRepository) FindEmailsByKeyword(keyword string) (emails []string, err error) {
+	if len(keyword) < 3 {
+		return emails, fmt.Errorf("keyword must be at least 3 characters")
+	}
+
+	var results []employeeModel.Employee
+
+	err = d.db.
+		Select("Email").
+		Where("Email LIKE ? OR Name LIKE ? OR FirstName LIKE ?",
+			"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%").
+		Find(&results).Error
+
+	if err != nil {
+		return emails, err
+	}
+
+	for _, r := range results {
+		emails = append(emails, r.Email)
+	}
+
+	return emails, nil
 }

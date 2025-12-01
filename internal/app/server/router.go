@@ -58,12 +58,17 @@ func Router(opt handler.HandlerOption) *gin.Engine {
 	// r.MaxMultipartMemory = 8 << 20 // 8 MiB
 	r.MaxMultipartMemory = 100 * 1024 * 1024 // 100MB
 
-	apiGroup := r.Group("/api/v1", opt.AuthMiddleware.AuthorizeEmployee())
-	// apiGroup := r.Group("/api/v1")
+	// apiGroup := r.Group("/api/v1", opt.AuthMiddleware.AuthorizeEmployee())
+	apiGroup := r.Group("/api/v1")
 	{
 		apiGroup.GET("/departement", departmentHandler.GetDepartment)
-		apiGroup.GET("/employee", employeeHandler.GetEmployee)
 		apiGroup.GET("/user", employeeHandler.GetUser)
+
+		employeeGroup := apiGroup.Group("/employee")
+		{
+			employeeGroup.GET("", employeeHandler.GetEmployee)
+			employeeGroup.GET("/emails", employeeHandler.GetEmployeeEmails)
+		}
 
 		formHistoryGroup := apiGroup.Group("/form-history")
 		{

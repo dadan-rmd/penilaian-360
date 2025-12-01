@@ -9,4 +9,5 @@ type IEmployeeRepository interface {
 	FindByEmailAndAccessToken(email, accessToken string) (entity employeeModel.Employee, err error)
 	FindByIds(ids []int64) (entity []employeeModel.Employee, err error)
 	FindNameAndEmployedIDByIds(ids []int64) (entities []employeeModel.EmployedEmployeeResponse, err error)
+	FindEmailsByKeyword(keyword string) (emails []string, err error)
 }

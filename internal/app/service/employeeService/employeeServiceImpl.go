@@ -7,6 +7,7 @@ import (
 	"penilaian-360/internal/app/commons/jwtHelper"
 	"penilaian-360/internal/app/commons/loggers"
 	"penilaian-360/internal/app/model/employeeModel"
+	"penilaian-360/internal/app/model/evaluatorEmployeesModel"
 	"penilaian-360/internal/app/repository/employeeRepository"
 	"penilaian-360/internal/app/repository/evaluatedEmployeeRepository"
 	"penilaian-360/internal/app/repository/evaluatorEmployeeRepository"
@@ -65,4 +66,25 @@ func (s employeeService) GetEmployeeAll(record *loggers.Data, params employeeMod
 func (s employeeService) CreateToken(record *loggers.Data, email, accessToken string) (token string, err error) {
 	token, err = jwtHelper.EncodeJWT(email, accessToken)
 	return
+}
+
+func (s employeeService) GetEmployeeEmails(record *loggers.Data, params evaluatorEmployeesModel.EvaluatorEmployeeParams) (res []string, err error) {
+
+	if strings.ToUpper(params.Departement) == "ALL" {
+		params.Departement = ""
+	}
+
+	keyword := strings.TrimSpace(params.Search)
+	if len(keyword) < 3 {
+		err = fmt.Errorf("search keyword must be at least 3 characters")
+		return
+	}
+
+	emails, err := s.employeeRepo.FindEmailsByKeyword(keyword)
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, FindEmailsByKeyword %v", err))
+		return
+	}
+
+	return emails, nil
 }

@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"penilaian-360/internal/app/commons/loggers"
 	"penilaian-360/internal/app/commons/utils"
 	"penilaian-360/internal/app/model/employeeModel"
+	"penilaian-360/internal/app/model/evaluatorEmployeesModel"
 
 	"github.com/gin-gonic/gin"
 )
@@ -57,4 +59,22 @@ func (employee EmployeeHandler) GetUser(c *gin.Context) {
 	}
 
 	utils.BasicResponse(record, c.Writer, true, http.StatusOK, res, "Success")
+}
+
+func (employee EmployeeHandler) GetEmployeeEmails(c *gin.Context) {
+	var (
+		record = loggers.StartRecord(c.Request)
+	)
+
+	emails, err := employee.EmployeeService.GetEmployeeEmails(record, evaluatorEmployeesModel.EvaluatorEmployeeParams{
+		Search: c.Query("search"),
+	})
+	if err != nil {
+		loggers.Logf(record, fmt.Sprintf("Err, GetEmployeeEmails service: %v", err))
+		utils.BasicResponse(record, c.Writer, false, http.StatusInternalServerError, err.Error(), "")
+		return
+	}
+
+	// success
+	utils.BasicResponse(record, c.Writer, true, http.StatusOK, emails, "Success")
 }
