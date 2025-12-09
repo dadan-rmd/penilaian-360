@@ -244,18 +244,30 @@ func (s formHistoryService) FormHistoryAssignment(record *loggers.Data, request 
 		go func() {
 			for _, evaluatedEmployee := range evaluatedEmployees {
 				for _, v := range employees {
-					err = mail.SendEvaluation([]string{v.Email}, cc, cast.ToString(evaluatedEmployee.Name), v.Name, deadline)
+
+					// 🔥 TAMBAHKAN TOKEN DI SINI
+					err = mail.SendEvaluation(
+						[]string{v.Email},
+						cc,
+						cast.ToString(evaluatedEmployee.Name),
+						v.Name,
+						deadline,
+						v.AccessToken, // 👈 tambahan
+					)
+
 					if err == nil {
 						employeeID = append(employeeID, v.Id)
 					}
 				}
 				evaluatedEmployeeID = append(evaluatedEmployeeID, evaluatedEmployee.EvaluatedId)
 			}
+
 			err = s.evaluatorEmployeeRepo.UpdateEmailSentByEvaluatedEmployeeIdAndEmployeeId(employeeID, evaluatedEmployeeID)
 			if err != nil {
 				fmt.Println("error UpdateEmailSentById : %v", err)
 			}
 		}()
+
 	}()
 	evaluateds := request.ToEvaluatedEmployee()
 	for i, v := range evaluateds {

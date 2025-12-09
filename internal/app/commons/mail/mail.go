@@ -12,8 +12,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func SendEvaluation(to []string, cc []string, evaluatedName, name, deadline string) error {
-	// Get the root path
+func SendEvaluation(to []string, cc []string, evaluatedName, name, deadline, token string) error {
 	_, file, _, _ := runtime.Caller(0)
 	rootPath := path.Join(file, "../../../../../")
 	tmplPath := rootPath + "/assets/template/evaluation.html"
@@ -23,7 +22,6 @@ func SendEvaluation(to []string, cc []string, evaluatedName, name, deadline stri
 		return err
 	}
 
-	// Generate email body
 	var body bytes.Buffer
 	err = t.Execute(&body, struct {
 		EvaluatedName string
@@ -34,14 +32,13 @@ func SendEvaluation(to []string, cc []string, evaluatedName, name, deadline stri
 		EvaluatedName: evaluatedName,
 		Name:          name,
 		Deadline:      deadline,
-		URL:           os.Getenv("URL_EVALUATION"),
+		URL:           os.Getenv("URL_EVALUATION") + "?token=" + token,
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to execute email template")
 		return err
 	}
 
-	// Setup email
 	m := gomail.NewMessage()
 	m.SetHeader("From", os.Getenv("CONFIG_SENDER_NAME")+" <"+os.Getenv("CONFIG_AUTH_EMAIL")+">")
 	m.SetHeader("To", to...)
@@ -51,9 +48,13 @@ func SendEvaluation(to []string, cc []string, evaluatedName, name, deadline stri
 	m.SetHeader("Subject", "Verifikasi Email")
 	m.SetBody("text/html", body.String())
 
-	d := gomail.NewDialer(os.Getenv("CONFIG_SMTP_HOST"), cast.ToInt(os.Getenv("CONFIG_SMTP_PORT")), os.Getenv("CONFIG_AUTH_EMAIL"), os.Getenv("CONFIG_AUTH_PASSWORD"))
+	d := gomail.NewDialer(
+		os.Getenv("CONFIG_SMTP_HOST"),
+		cast.ToInt(os.Getenv("CONFIG_SMTP_PORT")),
+		os.Getenv("CONFIG_AUTH_EMAIL"),
+		os.Getenv("CONFIG_AUTH_PASSWORD"),
+	)
 
-	// Send email
 	if err := d.DialAndSend(m); err != nil {
 		log.Error().Err(err).Msg("Failed to send email")
 		return err

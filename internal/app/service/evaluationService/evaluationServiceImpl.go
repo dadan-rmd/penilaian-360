@@ -58,26 +58,46 @@ func (s evaluationService) EvaluationList(record *loggers.Data, paging datapagin
 		accessRoleDepartement = strings.Split(os.Getenv("ACCESS_ROLE_DEPARTEMENT"), ",")
 		whitelistUser         = strings.Split(os.Getenv("WHITELIST_USER"), ",")
 	)
-	if slices.Contains(accessRoleDepartement, employee.Department) || slices.Contains(whitelistUser, employee.Email) {
-		res, count, err = s.evaluatedEmployeeRepo.RetrieveListWithPaging(paging, params.Departement, params.Search)
+	if slices.Contains(accessRoleDepartement, employee.Department) ||
+		slices.Contains(whitelistUser, employee.Email) {
+
+		res, count, err = s.evaluatedEmployeeRepo.RetrieveListWithPaging(
+			paging, params.Departement, params.Search,
+		)
 		if err != nil {
 			loggers.Logf(record, fmt.Sprintf("Err, evaluated RetrieveListWithPaging %v", err))
 			return
 		}
+
+		if slices.Contains(whitelistUser, employee.Email) {
+			for i := 0; i < len(res); i++ {
+				if res[i].Action != "" {
+					res[i].Action += ",beri-penilaian"
+				} else {
+					res[i].Action = "beri-penilaian"
+				}
+			}
+		}
+
 	} else {
-		res, count, err = s.evaluatorEmployeeRepo.RetrieveListWithPaging(paging, employee.Id, employee.Email, employee.Department, params.Departement, params.Search)
+		res, count, err = s.evaluatorEmployeeRepo.RetrieveListWithPaging(
+			paging, employee.Id, employee.Email, employee.Department,
+			params.Departement, params.Search,
+		)
 		if err != nil {
 			loggers.Logf(record, fmt.Sprintf("Err, evaluator RetrieveListWithPaging %v", err))
 			return
 		}
+
 		for i := 0; i < len(res); i++ {
 			if res[i].Action != "" {
-				res[i].Action = res[i].Action + ",beri-penilaian"
+				res[i].Action += ",beri-penilaian"
 			} else {
 				res[i].Action = "beri-penilaian"
 			}
 		}
 	}
+
 	return
 }
 

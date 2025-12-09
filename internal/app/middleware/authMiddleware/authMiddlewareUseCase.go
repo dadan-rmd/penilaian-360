@@ -92,22 +92,25 @@ func (auth *authMiddleware) getUserFromJWTWithRoleValidation(jwtToken string) (e
 func (auth *authMiddleware) GetEmployee(c *gin.Context) (entity employeeModel.Employee, err error) {
 	value, exists := c.Get("employee")
 	if !exists {
-		err = ErrUserNotFound
-		return
+		return entity, ErrUserNotFound
 	}
-	entity, ok := value.(employeeModel.Employee)
+
+	e, ok := value.(employeeModel.Employee)
 	if !ok {
-		err = ErrInvalidToken
-		return
+		return entity, ErrInvalidToken
 	}
-	entity.Role = entity.Position
+
 	whitelistUser := strings.Split(os.Getenv("WHITELIST_USER"), ",")
 	accessRoleDepartement := strings.Split(os.Getenv("ACCESS_ROLE_DEPARTEMENT"), ",")
-	entity.Role = "employee"
-	if slices.Contains(accessRoleDepartement, entity.Department) {
-		entity.Role = "hr"
-	} else if slices.Contains(whitelistUser, entity.Email) {
-		entity.Role = "head"
+
+	role := "employee"
+
+	if slices.Contains(accessRoleDepartement, e.Department) {
+		role = "hr"
+	} else if slices.Contains(whitelistUser, e.Email) {
+		role = "head"
 	}
-	return
+
+	e.Role = role
+	return e, nil
 }
